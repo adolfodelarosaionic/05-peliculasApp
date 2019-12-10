@@ -74,7 +74,22 @@ Podemos usar el URL [https://api.themoviedb.org/3/movie/550?api_key=5cc470f99192
 
 También nos genera un **Token de acceso de lectura a la API (v4 auth)**
 
+### The Movie Database (TMDb) API
+
+En el siguiente enlace tenemos información completa sobre [The Movie Database (TMDb) API](https://developers.themoviedb.org/3/getting-started/introduction)
+
+### Descubre Ejemplos del API
+
+En el siguiente enlace podemos ver algunos [Ejemplos del API](https://www.themoviedb.org/documentation/api/discover)
+
 ## Servicio para traer las películas de estreno                                                                  08:31
+
+### Descubre ejemplos de API
+
+En el siguiente enlace tenemos algunos ejemplos para usar el API:
+
+[Descubre ejemplos de API]()
+
 ## Crear la interfaz de la respuesta y películas                                                                 04:18
 ## Mostrar películas - pipe.module y pipe imagen                                                                 10:56
 ## Variables globales de nuestra aplicación                                                                      10:24
