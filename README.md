@@ -37,6 +37,37 @@ Así como el icono del 3er tab por `star-outline`.
 <img src="/images/peliculasAppNewTabas.png">
 
 ## Creando un API Key en TheMovieDB                                                                              03:21
+
+Vamos a utilizar la página [themoviedb](https://www.themoviedb.org/) 
+
+"La base de datos de películas (TMDb) es una base de datos de películas y televisión creada por la comunidad. Todos los datos han sido agregados por nuestra increíble comunidad que se remonta a 2008. El fuerte enfoque internacional y la amplitud de datos de TMDb son en gran medida incomparables y algo de lo que estamos increíblemente orgullosos. En pocas palabras, vivimos y respiramos comunidad y eso es precisamente lo que nos hace diferentes."
+
+<img src="/images/themoviedb.png">
+
+### Registrarse en The Movie DB
+
+Debemos registrarnos en The Movie DB
+
+<img src="/images/themoviedbRegistro.png">
+
+Una vez validado el email que nos envian podemos ingresar a nuestra cuenta:
+
+<img src="/images/themoviedbIngreso.png">
+
+Una vez adentro de nuestra cuenta ya podemos crear nuestro API Key, nos vamos a  `Perfil / Editar perfil / API`:
+
+<img src="/images/themoviedbAPI.png">
+
+Pulsamos en `click here`:
+
+<img src="/images/themoviedbDeveloper.png">
+
+Nos sale un texto que debemos Aceptar. Llegamos a un formulario que debemos rellenar.
+
+<img src="/images/themoviedbFormulario.png">
+
+
+
 ## Servicio para traer las películas de estreno                                                                  08:31
 ## Crear la interfaz de la respuesta y películas                                                                 04:18
 ## Mostrar películas - pipe.module y pipe imagen                                                                 10:56
