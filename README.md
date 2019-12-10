@@ -15,6 +15,27 @@ El objetivo es reforzar conocimientos con las tareas y enfocarnos en un diseño 
 :+1:
 
 ## Inicio de proyecto - PeliculasApp                                                                             02:42
+
+Creación del nuevo proyecto:
+
+`ionic start peliculasApp tabs`
+
+Cambiemonos a la carpeta del proyecto y levantemos el servidor:
+
+`ionic serve`
+
+<img src="images/peliculasAppInicio.png">
+
+Vamos a cambiar el nombre de los tabs en el archivo `tabs.page.html` por:
+
+* Películas
+* Buscar
+* Favoritos
+
+Así como el icono del 3er tab por `star-outline`.
+
+<img src="/images/peliculasAppNewTabas.png">
+
 ## Creando un API Key en TheMovieDB                                                                              03:21
 ## Servicio para traer las películas de estreno                                                                  08:31
 ## Crear la interfaz de la respuesta y películas                                                                 04:18
