@@ -66,7 +66,13 @@ Nos sale un texto que debemos Aceptar. Llegamos a un formulario que debemos rell
 
 <img src="/images/themoviedbFormulario.png">
 
+Una vez rellenado el formulario nos genera nuestra **Clave de la API (v3 auth) 5cc470f991922e74ecfac8aaed7d9350** 
 
+<img src="/images/themoviedbClave.png">
+
+Podemos usar el URL [https://api.themoviedb.org/3/movie/550?api_key=5cc470f991922e74ecfac8aaed7d9350](https://api.themoviedb.org/3/movie/550?api_key=5cc470f991922e74ecfac8aaed7d9350) para recuperar el JSON.
+
+También nos genera un **Token de acceso de lectura a la API (v4 auth)**
 
 ## Servicio para traer las películas de estreno                                                                  08:31
 ## Crear la interfaz de la respuesta y películas                                                                 04:18
