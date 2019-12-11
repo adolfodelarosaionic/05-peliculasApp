@@ -420,8 +420,264 @@ ngOnInit() {
 }
 ```
 
-
 ## Mostrar películas - pipe.module y pipe imagen                                                                 10:56
+
+Vamos a empezar a mostrar información en nuestra pantalla principal que es `tab1.page.html`, empecemos por borrar todo lo que tiene, incluso el `header` ya que esta aplicación no los usara.
+
+Sustituyamoslo por:
+
+```js
+<ion-content>
+    <ion-slides>
+      <ion-slide *ngFor="let pelicula of peliculasRecientes">
+        <h1>{{ pelicula.title }}</h1>
+      </ion-slide>
+    </ion-slides>
+</ion-content>
+```
+Tenemos un Slides que muestra el título de la película en un Slide, si nos desplazamos hacia los lados va mostrando los siguientes títulos, hasta llegar a la película 20 que es la última para la primer página:
+
+<img src="/images/slidesTitulo.png">
+
+Podriamos pintar las imagenes en lugar de los títulos, el JSON nos regresa dos imagenes diferentes, `poster_path` y `backdrop_path`:
+
+```js
+"poster_path": "/jnFCk7qGGWop2DgfnJXeKLZFuBq.jpg",
+"backdrop_path": "/xJWPZIYOEFIjZpBL7SVBGnzRYXp.jpg",
+```
+
+Como podemos observar son URLs incompleto, si nos vamos a la [documentación de Imagenes en The Movie DB](https://developers.themoviedb.org/3/getting-started/images), tenemos un ejemplo de un URL completo:
+
+`https://image.tmdb.org/t/p/w500/kqjL17yufvn9OVLyXYpvtyrFfak.jpg`
+
+El cual corresponde a una imagen de la película de MadMax:
+
+<img src="/images/madmax.jpg">
+
+Por lo que para completar los URLs de las dos imagenes que regresa el JSON tenemos que añadirles `https://image.tmdb.org/t/p/w500` es decir los dos URLs completos son:
+
+```js
+"poster_path": "https://image.tmdb.org/t/p/w500/jnFCk7qGGWop2DgfnJXeKLZFuBq.jpg",
+"backdrop_path": "https://image.tmdb.org/t/p/w500/xJWPZIYOEFIjZpBL7SVBGnzRYXp.jpg",
+```
+
+<img src="/images/imagen_poster_path.jpg">
+
+<img src="/images/imagen_backdrop_path.jpg">
+
+Por lo que en nuestro código usaremos `poster_path` añadiendo `https://image.tmdb.org/t/p/w500` previamente. Esto lo podemos hacer usando `pipes`, como puede ser que usemos varios, crearemos un modulo que maneje todos los `pipes`.
+
+### Creación del Modulo pipes 
+
+Para crear el modulo usamos el comando:
+
+`ionic g m pipes`
+
+Nos indica:
+
+`CREATE src/app/pipes/pipes.module.ts (191 bytes)`
+
+Es decir que crea una carpeta `pipes` y dentro el archivo `pipes.module.ts`.
+
+### Creación del pipe imagen
+
+El siguiente paso es crear un `pipe` que llamaremos `imagen` usando el comando:
+
+`ionic g pipe pipes/imagen --skipTests=true`
+
+Nos indica:
+
+```js
+CREATE src/app/pipes/imagen.pipe.ts (205 bytes)
+UPDATE src/app/pipes/pipes.module.ts (245 bytes)
+```
+
+Se crea el archivo `imagen.pipe.ts` y se actualiza `pipes.module.ts`. 
+
+Vamos a `pipes.module.ts`
+
+```js
+import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ImagenPipe } from './imagen.pipe';
+
+@NgModule({
+  declarations: [
+    ImagenPipe
+  ],
+  imports: [
+    CommonModule
+  ]
+})
+export class PipesModule { }
+```
+
+Aquí se ha importado y declarado `ImagenPipe`, pero como es algo que usaremos fuera del modulo tenemos que decirle que será exportable con:
+
+```js
+exports: [
+  ImagenPipe
+],
+```
+
+### Lógica en el pipe
+
+Vamos al archivo `imagen.pipe.ts` que es donde debemos trabajar nuestra lógica para que la imagen tenga el URL completo.
+
+```js
+import { Pipe, PipeTransform } from '@angular/core';
+
+@Pipe({
+  name: 'imagen'
+})
+export class ImagenPipe implements PipeTransform {
+
+  transform(value: any, ...args: any[]): any {
+    return null;
+  }
+
+}
+```
+
+Una vez implementada la lógica en el `pipe imagen` el código nos queda así:
+
+```js
+import { Pipe, PipeTransform } from '@angular/core';
+// Ruta completa de la imágen
+// https://image.tmdb.org/t/p/w500/kqjL17yufvn9OVLyXYpvtyrFfak.jpg
+const URL = 'https://image.tmdb.org/t/p';
+
+@Pipe({
+  name: 'imagen'
+})
+export class ImagenPipe implements PipeTransform {
+
+  transform( img: string, size: string = 'w500'): string {
+
+    // Pregunto si existe una imágen
+    if ( !img ) {
+      return;
+    }
+
+    const imgUrl = `${ URL }/${ size }${ img }`;
+    console.log('URL', imgUrl );
+
+    return imgUrl;
+  }
+}
+```
+
+### Como utilizar el pipe imagen
+
+Lo primero que debemos hacer es importar el `pipes.module.ts` en `tab1.module.ts`:
+
+```js
+import { PipesModule } from '../pipes/pipes.module';
+
+@NgModule({
+  imports: [
+    IonicModule,
+    CommonModule,
+    FormsModule,
+    PipesModule,
+    RouterModule.forChild([{ path: '', component: Tab1Page }])
+  ],
+  declarations: [Tab1Page]
+})
+export class Tab1PageModule {}
+```
+Vamos a `tab1.module.html` para hacer que nos pinte la imagen usando nuestro pipe, el código necesario es:
+
+```js
+<ion-content>
+  <ion-slides>
+    <ion-slide *ngFor="let pelicula of peliculasRecientes">
+      <ion-card>
+        <img [src]="pelicula.backdrop_path | imagen">
+      </ion-card>
+    </ion-slide>
+  </ion-slides>
+</ion-content>
+```
+Al cargar la página observamos como ya se muestra una imágen, y como en el `imagen.pipe.ts` hemos puesto un `console.log('URL', imgUrl );` vemos en consola todas las rutas de las imagenes:
+
+<img src="/images/rutasPipes.png">
+
+Como se puede ver también en la consola hay algunas imagenes que no existen:
+
+<img src="/images/sinImagen.png">
+
+La mayoria de las imagenes si existe por lo que nos desplazamos a las siguiente película arrastrando la pantalla lateralmente, tendriamos algo así:
+
+<img src="/images/slidesBackdrop.png">
+
+Lo unico malo de este diseño es que no es muy intuitivo para el usuario saber que se debe desplazar lateralmente para ver otras películas. Vamos a cambiar un poco nuestros `slides` poniendo algunas opciones.
+
+Vamos a `tab1.page.html` y añadamos las opciones:
+
+```js
+<ion-content>
+  <ion-slides [options]="slideOpts">
+    <ion-slide *ngFor="let pelicula of peliculasRecientes">
+      <ion-card>
+        <img [src]="pelicula.backdrop_path | imagen">
+      </ion-card>
+    </ion-slide>
+  </ion-slides>
+</ion-content>
+```
+
+Debemos definir `slideOpts` en `tab1.page.ts`:
+
+```js
+slideOpts = {
+  slidesPerView: 1.2,
+  freeMode: true
+};
+```
+
+Al hacer estos pequeños cambios la interface es más intuitiva para el usuario, de esta manera sabra que se puede desplazarse lateralmente para ver más películas:
+
+<img src="/images/slidesPerView.png">
+
+Como podemos apreciar existe un problema cuando el JSON no regresa una imágen, por lo que en ese caso pintaremos la imagen `no-image-banner.jpg` en ese caso:
+
+<img src="/images/no-image-banner.jpg">
+
+Esta imagen la debemos insertar en la carpeta `assets`.
+
+Por lo que en el `pipe imagen.pipe.ts` en caso de que no exista imagen regresaremos la imagen `no-image-banner.jpg`:
+
+```js
+import { Pipe, PipeTransform } from '@angular/core';
+// Ruta completa de la imágen
+// https://image.tmdb.org/t/p/w500/kqjL17yufvn9OVLyXYpvtyrFfak.jpg
+const URL = 'https://image.tmdb.org/t/p';
+
+@Pipe({
+  name: 'imagen'
+})
+export class ImagenPipe implements PipeTransform {
+
+  transform( img: string, size: string = 'w500'): string {
+
+    // Pregunto si existe una imágen
+    if ( !img ) {
+      return './assets/no-image-banner.jpg';
+    }
+
+    const imgUrl = `${ URL }/${ size }${ img }`;
+    console.log('URL', imgUrl );
+
+    return imgUrl;
+  }
+}
+```
+
+Con esta solución ya no se rompe la aplicación, se ve una imagen en caso de no existir:
+
+<img src="/imagen/sinImagen-no-image-banner.png">
+
 ## Variables globales de nuestra aplicación                                                                      10:24
 ## Componente SlideShow y componente SlideShow-Poster                                                            12:20
 ## Mostrar películas populares                                                                                   04:36
