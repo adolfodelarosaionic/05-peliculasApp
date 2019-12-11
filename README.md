@@ -676,7 +676,7 @@ export class ImagenPipe implements PipeTransform {
 
 Con esta solución ya no se rompe la aplicación, se ve una imagen en caso de no existir:
 
-<img src="/imagen/sinImagen-no-image-banner.png">
+<img src="/images/sinImagen-no-image-banner.png">
 
 ## Variables globales de nuestra aplicación                                                                      10:24
 ## Componente SlideShow y componente SlideShow-Poster                                                            12:20
