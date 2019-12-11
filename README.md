@@ -256,6 +256,171 @@ Si ejecutamos la aplicación al cargar el Tab Películas vemos como se recupera 
 <img src="/images/llamadaServicio.png">
 
 ## Crear la interfaz de la respuesta y películas                                                                 04:18
+
+Vamos a crear una **Interfaz** para manejar de una manera más sencilla los resultados que regresa el Servicio creado en la sección anterior, en nuestro archivo `tab1.page.ts` donde invocamos el servicio, tenemos:
+
+```js
+export class Tab1Page implements OnInit{
+
+  constructor( private moviesService: MoviesService) {}
+
+  ngOnInit() {
+    this.moviesService.getFeature()
+    .subscribe( console.log );
+  }
+}
+```
+
+Lo modificamos por esto:
+
+```js
+ngOnInit() {
+  this.moviesService.getFeature()
+  .subscribe( resp => {
+    console.log('Resp', resp);
+  });
+}
+```
+
+<img src="/images/llamadaServicioResp.png">
+
+Obtenemos el mismo resultado pero con la palabra **Resp** previamente. 
+
+### General la interfaz basadonos en el JSON
+
+Para generar la interfaz a partir de un JSON podemos seguir los siguientes pasos:
+
+* Tener instalada la Extensión JSON to TS
+* En la carpeta APP creamos una carpeta llamada **interfaces**
+* Creamos el archivo `interfaces.ts`
+* Tomando el URL lo cargamos en el navegador:
+   `https://api.themoviedb.org/3/discover/movie?primary_release_date.gte=2019-11-01&primary_release_date.lte=2019-12-10&api_key=5cc470f991922e74ecfac8aaed7d9350&language=es&include_image_language=es`
+* Copiamos el JSON entero que nos regresa con Ctrl+C
+* En el archivo `interfaces.ts` vamos a llamar el Pluging `JSON to TS from clipboard` o usar **Convert from clipboard** (`Ctrl + Alt + V`)
+
+Al hacer todo esto en el archivo `interfaces.ts` se generan dos interfaces basados en el JSON:
+
+```js
+interface RootObject {
+  page: number;
+  total_results: number;
+  total_pages: number;
+  results: Result[];
+}
+
+interface Result {
+  popularity: number;
+  vote_count: number;
+  video: boolean;
+  poster_path: string;
+  id: number;
+  adult: boolean;
+  backdrop_path?: string;
+  original_language: string;
+  original_title: string;
+  genre_ids: number[];
+  title: string;
+  vote_average: number;
+  overview: string;
+  release_date: string;
+}
+```
+
+Para que estas dos interfaces puedan ser usadas desde fuera necesitan ser exportables, ademas vamos a cambiarles el nombre para que refrejen lo que representan, por lo que el elcódigo final queda así:
+
+```js
+export interface RespuestaMDB {
+  page: number;
+  total_results: number;
+  total_pages: number;
+  results: Pelicula[];
+}
+
+export interface Pelicula {
+  popularity: number;
+  vote_count: number;
+  video: boolean;
+  poster_path: string;
+  id: number;
+  adult: boolean;
+  backdrop_path?: string;
+  original_language: string;
+  original_title: string;
+  genre_ids: number[];
+  title: string;
+  vote_average: number;
+  overview: string;
+  release_date: string;
+}
+```
+
+Ahora que ya tenemos definidas las Interfaces, volvamos a `tab1.page.ts` donde podemos poner el tipo `RespuestaMBD` a **resp** y crearemos el atributo `peliculasRecientes` que será un array que contenga toda la lista de películas, nuestro código final queda así:
+
+```js
+import { RespuestaMDB, Pelicula } from './../interfaces/interfaces';
+import { MoviesService } from '../services/movies.service';
+import { Component, OnInit } from '@angular/core';
+
+@Component({
+  selector: 'app-tab1',
+  templateUrl: 'tab1.page.html',
+  styleUrls: ['tab1.page.scss']
+})
+export class Tab1Page implements OnInit{
+
+  peliculasRecientes: Pelicula[] = [];
+
+  constructor( private moviesService: MoviesService) {}
+
+  ngOnInit() {
+    this.moviesService.getFeature()
+    .subscribe( (resp: RespuestaMDB) => {
+      console.log('Resp', resp);
+      this.peliculasRecientes = resp.results;
+    });
+  }
+}
+```
+
+Todo debe seguir funcionando igual que antes:
+
+<img src="/images/llamadaServicioResp.png">
+
+Lo único que ya podremos saber exactamente que datos nos regresa el JSON, facilitando su uso.
+
+Si vamos al servicio podemos mandarle explicitamente el tipo de dato que regresa el servicio poniendo `<RespuestaMDB>`:
+
+```js
+getFeature() {
+    // tslint:disable-next-line:max-line-length
+    return this.http.get<RespuestaMDB>('https://api.themoviedb.org/3/discover/movie?primary_release_date.gte=2019-11-01&primary_release_date.lte=2019-12-10&api_key=5cc470f991922e74ecfac8aaed7d9350&language=es&include_image_language=es');
+  }
+```
+
+Haciendo esto podemos ir a `tab1.page.ts` que tiene:
+
+```js
+ngOnInit() {
+  this.moviesService.getFeature()
+  .subscribe( (resp: RespuestaMDB) => {
+    console.log('Resp', resp);
+    this.peliculasRecientes = resp.results;
+  });
+}
+```
+Y podemos quitar el tipado de aquí, por que ya se manda explicitamente desde el servicio. Por lo que el código puede quedar así:
+
+```js
+ngOnInit() {
+  this.moviesService.getFeature()
+  .subscribe( resp => {
+    console.log('Resp', resp);
+    this.peliculasRecientes = resp.results;
+  });
+}
+```
+
+
 ## Mostrar películas - pipe.module y pipe imagen                                                                 10:56
 ## Variables globales de nuestra aplicación                                                                      10:24
 ## Componente SlideShow y componente SlideShow-Poster                                                            12:20
