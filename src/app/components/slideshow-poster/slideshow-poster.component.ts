@@ -2,16 +2,16 @@ import { Component, OnInit, Input } from '@angular/core';
 import { Pelicula } from '../../interfaces/interfaces';
 
 @Component({
-  selector: 'app-slideshow-backdrop',
-  templateUrl: './slideshow-backdrop.component.html',
-  styleUrls: ['./slideshow-backdrop.component.scss'],
+  selector: 'app-slideshow-poster',
+  templateUrl: './slideshow-poster.component.html',
+  styleUrls: ['./slideshow-poster.component.scss'],
 })
-export class SlideshowBackdropComponent implements OnInit {
+export class SlideshowPosterComponent implements OnInit {
 
   @Input() peliculas: Pelicula[] = [];
 
   slideOpts = {
-    slidesPerView: 1.2,
+    slidesPerView: 3.3,
     freeMode: true
   };
 

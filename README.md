@@ -1008,7 +1008,6 @@ Efectivamente todo se ve igual. ¿Entonces para que todo ese cambio? ¿Que hemos
 
 La respuesta es sencilla, podriamos usar ese componente en cualquier lado que quisieramos pintar otro arreglo diferente de películas, en este caso vamos a usarlo nuevamente en `tab.page.html` para ver su uso:
 
-
 ```js
 <ion-content>
   <ion-grid fixed>
@@ -1024,162 +1023,133 @@ La respuesta es sencilla, podriamos usar ese componente en cualquier lado que qu
 ```
 <img src="images/componenteSlideBackdrop.png">
 
+### Tarea 
 
 Ahora sí vamos con la tarea preste mucha atención.
 
-### Tarea 
+1. Hay que crear un componente llamado SlideShow-Poster
+
+`ionic g c components/slideshowPoster --skipTests=true`
+
+Nos indica:
+
+```
+CREATE src/app/components/slideshow-poster/slideshow-poster.component.html (35 bytes)
+CREATE src/app/components/slideshow-poster/slideshow-poster.component.spec.ts (746 bytes)
+CREATE src/app/components/slideshow-poster/slideshow-poster.component.ts (307 bytes)
+CREATE src/app/components/slideshow-poster/slideshow-poster.component.scss (0 bytes)
+```
+
+Nuevamente no a actualizado `components.module.ts` así que lo hare manualmente:
+
+```js
+import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { SlideshowBackdropComponent } from './slideshow-backdrop/slideshow-backdrop.component';
+import { SlideshowPosterComponent } from './slideshow-poster/slideshow-poster.component';
+import { IonicModule } from '@ionic/angular';
+import { PipesModule } from '../pipes/pipes.module';
+
+
+@NgModule({
+  declarations: [
+    SlideshowBackdropComponent,
+    SlideshowPosterComponent
+  ],
+  exports: [
+    SlideshowBackdropComponent,
+    SlideshowPosterComponent
+  ],
+  imports: [
+    CommonModule,
+    IonicModule,
+    PipesModule
+  ]
+})
+export class ComponentsModule { }
+```
+2. Crear un Slideshow utilizando el poster_path
+
+En el archivo `slideshow-poster.component.ts` metemos el siguiente código:
+
+```js
+import { Component, OnInit, Input } from '@angular/core';
+import { Pelicula } from '../../interfaces/interfaces';
+
+@Component({
+  selector: 'app-slideshow-poster',
+  templateUrl: './slideshow-poster.component.html',
+  styleUrls: ['./slideshow-poster.component.scss'],
+})
+export class SlideshowPosterComponent implements OnInit {
+
+  @Input() peliculas: Pelicula[] = [];
+
+  slideOpts = {
+    slidesPerView: 3.3,
+    freeMode: true
+  };
+
+  constructor() { }
+
+  ngOnInit() {}
+
+}
+```
+
+Y en el archivo `slideshow-poster.component.html` tenemos:
+
+```js
+<ion-slides [options]="slideOpts">
+  <ion-slide *ngFor="let pelicula of peliculas">
+    <ion-card> 
+      <img class="poster" [src]="pelicula.poster_path | imagen">
+    </ion-card>
+  </ion-slide>
+</ion-slides>
+```
+Aquí usamos la clase `poster` que insertaremos en `global.scss`.
+
+3. Crear una clase en `global.scss` para que los poster no salgan muy grandes.
+
+```css
+.poster{
+  width: 110px !important;
+  height: 160px !important;
+}
+```
+
+4. Meter el componente en `tab1.pages.html` en lugar del duplicado que tenemos, el código final es:
+
+```js
+<ion-content>
+
+  <ion-grid fixed>
+    <ion-row>
+      <ion-col>
+        <h3>Películas Nuevas</h3>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
 
-Voy a abrir un nuevo documento y voy a escribir lo que les voy a pedir.
+  <app-slideshow-backdrop [peliculas]="peliculasRecientes"></app-slideshow-backdrop>
 
-Primero hay que crearse un componente llamado explayo pero posted entonces el comando sería ONIC de
+  <ion-grid fixed>
+    <ion-row>
+      <ion-col>
+        <h3>Cartelera</h3>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
 
-generar PD de Peach no es un componente perdonazo un componente dentro de components las y se llamará
+  <app-slideshow-poster [peliculas]="peliculasRecientes"></app-slideshow-poster>
 
-Layo menos poste ese va a ser el comando que vamos a ejecutar aunque le podríamos poner así mejor OSEP
+</ion-content>
+```
 
-iba a ser lo mismo y le ponen el skip test Quip con la T mayúscula igual.
+Al cargar la página tenemos:
 
-Este es el comando que ocuparemos generar para componer.
-
-Ustedes saben que tienen que hacer hay que importarlo en algún lugar en algún módulo en algún lugar
-
-ustedes saben que tienen que hacer ahí.
-
-Luego necesito que se creen otros Layo crear un Layo pero en lugar de saber en lugar de utilizar este
-
-a este Evandro ustedes van a utilizar el poster para utilizar el poster para el cual ustedes recordarán
-
-que es una imagen pequeña como la que está acá.
-
-La idea es que aparezcan todas las películas o los posters horizontalmente que ustedes puedan hacer
-
-scroll en cada uno de ellos de la misma manera como hacemos scroll en éste.
-
-Adicionalmente la imagen va a tener que crearse una clase en el global punto ese CSS para mostrar los
-
-postes de un cierto tamaño porque si no van a quedar gigantes a esas imágenes le van a poner la clase
-
-poster con las siguientes opciones de un Winx de 110 píxeles importã y un Jeunet de HTC si no estoy
-
-mal de 160 píxeles también importante.
-
-La idea es que esas imágenes se miren un poquito pequeñas y ustedes puedan hacer este carrusel acá bien
-
-elegante.
-
-Básicamente eso sería todo en el top 1 Peach.
-
-Ustedes ya no van a ocupar este segundo es la you back drop simplemente van a colocar esto mismo lo
-
-voy a copiar pegar acá.
-
-Que sean películas nuevas.
-
-Vamos a poner cartelera o algo así.
-
-Cartelera y justo abajo de esto colocarían este nuevo componente llamado app menos litio menos poster.
-
-Tendrían que hacer algo más ahí tienen que mandarle el arreglo de las películas recibirlas.
-
-El arreglo de películas va a ser este mismo lo vamos a volver a utilizar y lo vamos a reciclar y eso
-
-es básicamente todo lo que tienen que hacer en la tarea de crearse el componente ese componente será
-
-un es Layo pero de postes y también hay que importar o crearse en el globo al punto de CCCC una clase
-
-llamada poster que será la que usarán en las imágenes con estas dimensiones.
-
-Básicamente es toda la tarea póngale pausa.
-
-Yo regreso con ustedes en unos segundos con la solución
-
-ok lo lograron hacer.
-
-Ya la han puesto pausa todavía tienen tres segundos antes de que yo empiezo a hacer 3 2 1.
-
-Vamos a comenzar la solución nosotros mismos sólo para tener unos resultados similares nos pedían crear
-
-este componente y lo voy a copiar el código lo voy a pegar acá hay una higiene general components Layo
-
-poster esquites.
-
-Pues yo no creo que esta bien revisemos me actualiza el components modo el excelente no están las pruebas
-
-cierro aquí tengo mi poster poster.
-
-Pero para poder utilizar ese poster aqui donde les pedí que lo usáramos hay que exportarlo.
-
-Poster no exportar también grabó los cambios y cierro acá.
-
-Ok entonces sigamos en esta página del Islam yo ya en teoría lo podría utilizar.
-
-Vamos a ver el poster ven ahí está perfecto ya me lo reconoce.
-
-También voy a ocupar mandar el arreglo de las películas las voy a colocar aquí también aunque todavía
-
-no lo estoy recibiendo por el imput pero eso es todo lo que voy a hacer por lo menos en el top 1.
-
-Regresemos a la ñopo.
-
-Necesitamos recibir esas películas entonces imput tap paréntesis son películas de tipo película esto
-
-es un arreglo y una inicializar vacío igual que la anterior.
-
-Estas películas son las que yo necesito para crear mis Layo el Layo que hay que colocar acá es básicamente
-
-el mismo HTML que tengo acá.
-
-De hecho hasta podríamos haber reutilizado este componente pero la verdad no quiero complicar mucho
-
-la cosa.
-
-Voy a pegar acá y en vez de utilizar el background paz vamos a utilizar el que yo les dije de la propiedad
-
-que les dije del poster Paz ok.
-
-Yo en vez de el banco es el póster Patch siempre el pack imagen.
-
-Vamos a ver que tal se ve.
-
-También había pedido que le colocaríamos la clase clase poster.
-
-Esta clase poster tiene la configuración que también le dije en el global punto ese CSS.
-
-Vamos a hacerlo globa que de hecho ya lo había puesto en el global de los cambios.
-
-Cierro esto ya hice todo lo que me pedían acá no voy a cerrar y me falta el slight options.
-
-Vamos a copiarlo options de este anterior aquí quiero que podremos mostrar más.
-
-Copio cierro y a pegar el slide options siempre.
-
-Pero es que voy a poner unas 3.3 podría ser más ya lo vamos a realizar los cambios y me faltan el tapón.
-
-Vamos a ver creo que ya está todo perfecto.
-
-Ahí está de hecho el 3.3 queda bastante bien y tenemos nuestro arreglo de películas recientes o la cartelera
-
-en teoría que son las películas que están ahorita en el cine y podemos deslizarlo de esta manera.
-
-La verdad es que queda bastante bien.
-
-En caso de que Udes ocupara otra parte de la cartelera igual a ésta simplemente buscaríamos clonar este
-
-póster.
-
-Eso es lo que vamos a usar después y eso sería todo.
-
-Espero que hayan logrado hacer esta tarea.
-
-Esto ejercita bastante los conceptos que hemos aprendido de módulos componentes mandar parámetros uso
-
-de componentes propios de Yony que es la ISO note que ya tenemos nuestro propio Layo horizontal.
-
-No se preocupen por errores propios del Skipper está bien lo dejamos así y continuamos con el siguiente
-
-video.
-
-
+<img src="/images/dosComponentesSlide.png">
 
 ## Mostrar películas populares                                                                                   04:36
 ## Mostrar pares de películas                                                                                    07:58
