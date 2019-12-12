@@ -679,6 +679,157 @@ Con esta solución ya no se rompe la aplicación, se ve una imagen en caso de no
 <img src="/images/sinImagen-no-image-banner.png">
 
 ## Variables globales de nuestra aplicación                                                                      10:24
+
+Vamos a optimizar un poco nuestra aplicacion, entre otras cosas para no tener las URLs por todos lados lo que complica el mantenimiento.
+
+Contamos con la carpeta `environments` con dos archivos:
+
+* `environment.prod.ts` para producción.
+* `environment.ts` para desarrollo local.
+
+En estos archivos podemos definir variables que podemos usar de manera global en nuestra aplicación.
+
+Vamos a abrir el archivo `environment.ts` y definir tres variables:
+
+* url
+* apiKey
+* imgPath
+
+```js
+export const environment = {
+  production: false,
+  url: 'https://api.themoviedb.org/3',
+  apiKey: '5cc470f991922e74ecfac8aaed7d9350',
+  imgPath: 'https://image.tmdb.org/t/p'
+};
+```
+
+Esto mismo lo copiaremos en el archivo `environment.prod.ts`, podría ser que para producción se usaran otros servidores por eso se tienen dos archivos diferentes pero en este caso se usara lo mismo.
+
+Los dos primeros los usamos en `movies.service.ts` y el tercero en `imagen.pipe.ts`. Por lo que vamos a sustituir en `imagen.pipe.ts` 
+esto: 
+
+`const URL = 'https://image.tmdb.org/t/p';``
+
+Por esto:
+
+`const URL = environment.imgPath;`
+
+Demos importarlo del archivo de propiedades locales y no del de producción:
+
+`import { environment } from './../../environments/environment';`
+
+Ahora vamos a cambiar el servicio `movies.service.ts`, este archivo necesita más ajustes por que la URL usada tiene varios parámetros, el código actual es:
+
+```js
+import { RespuestaMDB } from './../interfaces/interfaces';
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class MoviesService {
+
+  constructor(private http: HttpClient) { }
+
+  getFeature() {
+    // tslint:disable-next-line:max-line-length
+    return this.http.get<RespuestaMDB>('https://api.themoviedb.org/3/discover/movie?primary_release_date.gte=2019-11-01&primary_release_date.lte=2019-12-10&api_key=5cc470f991922e74ecfac8aaed7d9350&language=es&include_image_language=es');
+  }
+}
+```
+
+El código modificado queda así:
+
+```js
+import { environment } from './../../environments/environment';
+import { RespuestaMDB } from './../interfaces/interfaces';
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+
+const URL    = environment.url;
+const apiKey = environment.apiKey;
+
+@Injectable({
+  providedIn: 'root'
+})
+export class MoviesService {
+
+  constructor(private http: HttpClient) { }
+
+  private ejecutarQuery<T>( query: string ){
+
+    query = URL + query;
+    query += `&api_key=${ apiKey }&language=es&include_image_language=es`;
+
+    return this.http.get<T>( query );
+  }
+
+  getFeature() {
+    // tslint:disable-next-line:max-line-length
+    return this.ejecutarQuery<RespuestaMDB>('/discover/movie?primary_release_date.gte=2019-11-01&primary_release_date.lte=2019-12-10');
+  }
+}
+```
+
+Con los cambios hechos hasta aquí nuestra aplicación sigue trabajando exactamente igual:
+
+<img src="/images/slidesPerView.png">
+
+Hay una cosa que aun podemos optimizar y esto son las fechas que se le mandan ya que ahora mismo las estamos poniendo "harcodeadas", vamos a obtenerlas con JavaScript, el código modificado nos queda así:
+
+```js
+import { environment } from './../../environments/environment';
+import { RespuestaMDB } from './../interfaces/interfaces';
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+
+const URL    = environment.url;
+const apiKey = environment.apiKey;
+
+@Injectable({
+  providedIn: 'root'
+})
+export class MoviesService {
+
+  constructor(private http: HttpClient) { }
+
+  private ejecutarQuery<T>( query: string ){
+
+    query = URL + query;
+    query += `&api_key=${ apiKey }&language=es&include_image_language=es`;
+
+    return this.http.get<T>( query );
+  }
+
+  getFeature() {
+
+    const hoy = new Date();
+    const ultimoDia = new Date( hoy.getFullYear(), hoy.getMonth() + 1, 0).getDate();
+    const mes = hoy.getMonth() + 1;
+
+    let mesString;
+
+    if( mes < 10 ){
+      mesString = '0' + mes;
+    }else{
+      mesString = mes;
+    }
+
+    const inicio = `${ hoy.getFullYear() }-${ mesString }-01`;
+    const fin    = `${ hoy.getFullYear() }-${ mesString }-${ ultimoDia }`;
+
+    // tslint:disable-next-line:max-line-length
+    return this.ejecutarQuery<RespuestaMDB>(`/discover/movie?primary_release_date.gte=${ inicio }&primary_release_date.lte=${ fin }`);
+  }
+}
+```
+
+Como ya estamos recuperando los datos con otras fechas dinámicas lo obtenido ha cambiado pero todo sigue trabajando igual:
+
+<img src="/images/slidesFechaJS.png">
+
 ## Componente SlideShow y componente SlideShow-Poster                                                            12:20
 ## Mostrar películas populares                                                                                   04:36
 ## Mostrar pares de películas                                                                                    07:58

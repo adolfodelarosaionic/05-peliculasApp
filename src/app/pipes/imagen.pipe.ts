@@ -1,7 +1,8 @@
+import { environment } from './../../environments/environment';
 import { Pipe, PipeTransform } from '@angular/core';
 // Ruta completa de la imágen
 // https://image.tmdb.org/t/p/w500/kqjL17yufvn9OVLyXYpvtyrFfak.jpg
-const URL = 'https://image.tmdb.org/t/p';
+const URL = environment.imgPath;
 
 @Pipe({
   name: 'imagen'
