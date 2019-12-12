@@ -831,6 +831,356 @@ Como ya estamos recuperando los datos con otras fechas dinámicas lo obtenido ha
 <img src="/images/slidesFechaJS.png">
 
 ## Componente SlideShow y componente SlideShow-Poster                                                            12:20
+
+En esta sección vamos a crear dos componentes el primero de ellos `SlideShow` nos servira para tener un componente que nos haga lo que actualmente se hase en el `tab1`, la ventaja de tenerlo como componente es que si necesitamos usar algo parecido solo insertamos el componente en nuestra página y listo, actualmente no lo podriamos hacer, tendriamos que coner todo el código.
+
+Antes de hacer esto vamos a meter un título previo al Slider, en `tab1.page.html` usando el componente `ion-grid`:
+
+```js
+<ion-grid fixed>
+  <ion-row>
+    <ion-col>
+      <h3>Películas Nuevas</h3>
+    </ion-col>
+  </ion-row>
+</ion-grid>
+```
+
+<img src="/images/peliculasNuevas.png">
+
+### Crear el componente SlideShow
+
+Ahora voy a crearme un componente para almacenar aquí todo el Slide,recibirá como argumento las `películasRecientes`. A este componente le mandaré mi arreglo de películas que quiero desplegar y trabajará de esa manera.
+
+Necesito un módulo de componentes primero para agruparlos todos, lo crearemos con:
+
+`ionic g m components`
+
+Nos indica:
+
+`CREATE src/app/components/components.module.ts`
+
+Ahora vamos a crear el primer componente:
+
+`ionic g c components/slideshow-backdrop`
+
+De esa manera queda bastante claro que es el componente va a crear Slides de tipo de backdrop (como la imágen).
+
+Nos indica:
+
+```js
+CREATE src/app/components/slideshow-backdrop/slideshow-backdrop.component.html (37 bytes)
+CREATE src/app/components/slideshow-backdrop/slideshow-backdrop.component.spec.ts (760 bytes)
+CREATE src/app/components/slideshow-backdrop/slideshow-backdrop.component.ts (315 bytes)
+CREATE src/app/components/slideshow-backdrop/slideshow-backdrop.component.scss (0 bytes)
+```
+(Debería haber actualizado el archivo `components.module,ts` pero no lo hizo). Por lo que he tenido actualizar manualmente el código es:
+
+```js
+import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { SlideshowBackdropComponent } from './slideshow-backdrop/slideshow-backdrop.component';
+
+
+@NgModule({
+  declarations: [SlideshowBackdropComponent],
+  imports: [
+    CommonModule
+  ]
+})
+export class ComponentsModule { }
+```
+
+Voy a tomar el código del Slide que tengo en `tab1.page.html` y lo transladamos a `slideshow-backdrop.component.html`:
+
+```js
+<ion-slides [options]="slideOpts">
+  <ion-slide *ngFor="let pelicula of peliculasRecientes">
+    <ion-card>
+      <img [src]="pelicula.backdrop_path | imagen">
+    </ion-card>
+  </ion-slide>
+</ion-slides>
+```
+Si cargamos la página ya no vemos las imagenes:
+
+<img src="/images/peliculasNuevasSinImagenes.png">
+
+Pero no nos marca ningun error. 
+
+En `components.module,ts` es necesario importar el `IonicModule` para poder utilizar todos los componentes de Ionic dentro de los componentes del modulo, también debemos importar nuestro `PipeModule` para usar el pipe `imagen`. También es necesario exportar el componente `SlideshowBackdropComponent` por que será utilizado fuera de este modulo. Nuestro código final de `components.module,ts` queda así:
+
+```js
+import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { SlideshowBackdropComponent } from './slideshow-backdrop/slideshow-backdrop.component';
+import { IonicModule } from '@ionic/angular';
+import { PipesModule } from '../pipes/pipes.module';
+
+
+@NgModule({
+  declarations: [
+    SlideshowBackdropComponent
+  ],
+  exports: [
+    SlideshowBackdropComponent
+  ],
+  imports: [
+    CommonModule,
+    IonicModule,
+    PipesModule
+  ]
+})
+export class ComponentsModule { }
+```
+
+En `slideshow-backdrop.component.html` estamos utilizando `peliculasRecientes` (lo cambiaremos por `peliculas`) pero este parámetro no lo estamos recibiendo en ningún lado, por eso no se pinta nada. Por lo que es necesario recibirlo en `slideshow-backdrop.component.ts` usando `@Input`:
+
+`@Input() peliculas: Pelicula[] = [];`
+
+También tenemos que incluir la variable `slideOpts` las quitamos de `tab1.page.ts` y las ponemos en `slideshow-backdrop.component.ts`.
+
+El código final queda así:
+
+```js
+import { Component, OnInit, Input } from '@angular/core';
+import { Pelicula } from '../../interfaces/interfaces'
+
+@Component({
+  selector: 'app-slideshow-backdrop',
+  templateUrl: './slideshow-backdrop.component.html',
+  styleUrls: ['./slideshow-backdrop.component.scss'],
+})
+export class SlideshowBackdropComponent implements OnInit {
+
+  @Input() peliculas: Pelicula[] = [];
+
+  slideOpts = {
+    slidesPerView: 1.2,
+    freeMode: true
+  };
+
+  constructor() { }
+
+  ngOnInit() {}
+
+}
+```
+
+Ya hemos incluido todo lo que necesita nuestro componente. El siguiente paso es usar ese componente en `tab1.page.html`, pero para poderlo usar el componente que esta incluido en el modulo `ComponentsModule`, debemos importar dicho modulo en `tab.module.ts`:
+
+```js
+import { IonicModule } from '@ionic/angular';
+import { RouterModule } from '@angular/router';
+import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Tab1Page } from './tab1.page';
+import { PipesModule } from '../pipes/pipes.module';
+import { ComponentsModule } from '../components/components.module';
+
+@NgModule({
+  imports: [
+    IonicModule,
+    CommonModule,
+    FormsModule,
+    PipesModule,
+    ComponentsModule,
+    RouterModule.forChild([{ path: '', component: Tab1Page }])
+  ],
+  declarations: [Tab1Page]
+})
+export class Tab1PageModule {}
+```
+Haciendo lo anterior ya podemos ir a `tab1.pages.html` e incluir nuestro componente, lo hacemos de la siguiente forma:
+
+```js
+<app-slideshow-backdrop [peliculas]="peliculasRecientes"></app-slideshow-backdrop>
+```
+
+Entre corchetes ponemos el nombre de la propiedad `@Input() peliculas: Pelicula[] = [];` que definimos en `slideshow-backdrop.component.ts`, y lo igualamos a `peliculasRecientes` que es el array donde tenemos la lista de nuestras películas. 
+
+Vamos a probarlo deberíamos verlo igual.
+
+<img src="/images/peliculasNuevas.png">
+
+Efectivamente todo se ve igual. ¿Entonces para que todo ese cambio? ¿Que hemos ganado?
+
+La respuesta es sencilla, podriamos usar ese componente en cualquier lado que quisieramos pintar otro arreglo diferente de películas, en este caso vamos a usarlo nuevamente en `tab.page.html` para ver su uso:
+
+
+```js
+<ion-content>
+  <ion-grid fixed>
+    <ion-row>
+      <ion-col>
+        <h3>Películas Nuevas</h3>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+  <app-slideshow-backdrop [peliculas]="peliculasRecientes"></app-slideshow-backdrop>
+  <app-slideshow-backdrop [peliculas]="peliculasRecientes"></app-slideshow-backdrop>
+</ion-content>
+```
+<img src="images/componenteSlideBackdrop.png">
+
+
+Ahora sí vamos con la tarea preste mucha atención.
+
+### Tarea 
+
+Voy a abrir un nuevo documento y voy a escribir lo que les voy a pedir.
+
+Primero hay que crearse un componente llamado explayo pero posted entonces el comando sería ONIC de
+
+generar PD de Peach no es un componente perdonazo un componente dentro de components las y se llamará
+
+Layo menos poste ese va a ser el comando que vamos a ejecutar aunque le podríamos poner así mejor OSEP
+
+iba a ser lo mismo y le ponen el skip test Quip con la T mayúscula igual.
+
+Este es el comando que ocuparemos generar para componer.
+
+Ustedes saben que tienen que hacer hay que importarlo en algún lugar en algún módulo en algún lugar
+
+ustedes saben que tienen que hacer ahí.
+
+Luego necesito que se creen otros Layo crear un Layo pero en lugar de saber en lugar de utilizar este
+
+a este Evandro ustedes van a utilizar el poster para utilizar el poster para el cual ustedes recordarán
+
+que es una imagen pequeña como la que está acá.
+
+La idea es que aparezcan todas las películas o los posters horizontalmente que ustedes puedan hacer
+
+scroll en cada uno de ellos de la misma manera como hacemos scroll en éste.
+
+Adicionalmente la imagen va a tener que crearse una clase en el global punto ese CSS para mostrar los
+
+postes de un cierto tamaño porque si no van a quedar gigantes a esas imágenes le van a poner la clase
+
+poster con las siguientes opciones de un Winx de 110 píxeles importã y un Jeunet de HTC si no estoy
+
+mal de 160 píxeles también importante.
+
+La idea es que esas imágenes se miren un poquito pequeñas y ustedes puedan hacer este carrusel acá bien
+
+elegante.
+
+Básicamente eso sería todo en el top 1 Peach.
+
+Ustedes ya no van a ocupar este segundo es la you back drop simplemente van a colocar esto mismo lo
+
+voy a copiar pegar acá.
+
+Que sean películas nuevas.
+
+Vamos a poner cartelera o algo así.
+
+Cartelera y justo abajo de esto colocarían este nuevo componente llamado app menos litio menos poster.
+
+Tendrían que hacer algo más ahí tienen que mandarle el arreglo de las películas recibirlas.
+
+El arreglo de películas va a ser este mismo lo vamos a volver a utilizar y lo vamos a reciclar y eso
+
+es básicamente todo lo que tienen que hacer en la tarea de crearse el componente ese componente será
+
+un es Layo pero de postes y también hay que importar o crearse en el globo al punto de CCCC una clase
+
+llamada poster que será la que usarán en las imágenes con estas dimensiones.
+
+Básicamente es toda la tarea póngale pausa.
+
+Yo regreso con ustedes en unos segundos con la solución
+
+ok lo lograron hacer.
+
+Ya la han puesto pausa todavía tienen tres segundos antes de que yo empiezo a hacer 3 2 1.
+
+Vamos a comenzar la solución nosotros mismos sólo para tener unos resultados similares nos pedían crear
+
+este componente y lo voy a copiar el código lo voy a pegar acá hay una higiene general components Layo
+
+poster esquites.
+
+Pues yo no creo que esta bien revisemos me actualiza el components modo el excelente no están las pruebas
+
+cierro aquí tengo mi poster poster.
+
+Pero para poder utilizar ese poster aqui donde les pedí que lo usáramos hay que exportarlo.
+
+Poster no exportar también grabó los cambios y cierro acá.
+
+Ok entonces sigamos en esta página del Islam yo ya en teoría lo podría utilizar.
+
+Vamos a ver el poster ven ahí está perfecto ya me lo reconoce.
+
+También voy a ocupar mandar el arreglo de las películas las voy a colocar aquí también aunque todavía
+
+no lo estoy recibiendo por el imput pero eso es todo lo que voy a hacer por lo menos en el top 1.
+
+Regresemos a la ñopo.
+
+Necesitamos recibir esas películas entonces imput tap paréntesis son películas de tipo película esto
+
+es un arreglo y una inicializar vacío igual que la anterior.
+
+Estas películas son las que yo necesito para crear mis Layo el Layo que hay que colocar acá es básicamente
+
+el mismo HTML que tengo acá.
+
+De hecho hasta podríamos haber reutilizado este componente pero la verdad no quiero complicar mucho
+
+la cosa.
+
+Voy a pegar acá y en vez de utilizar el background paz vamos a utilizar el que yo les dije de la propiedad
+
+que les dije del poster Paz ok.
+
+Yo en vez de el banco es el póster Patch siempre el pack imagen.
+
+Vamos a ver que tal se ve.
+
+También había pedido que le colocaríamos la clase clase poster.
+
+Esta clase poster tiene la configuración que también le dije en el global punto ese CSS.
+
+Vamos a hacerlo globa que de hecho ya lo había puesto en el global de los cambios.
+
+Cierro esto ya hice todo lo que me pedían acá no voy a cerrar y me falta el slight options.
+
+Vamos a copiarlo options de este anterior aquí quiero que podremos mostrar más.
+
+Copio cierro y a pegar el slide options siempre.
+
+Pero es que voy a poner unas 3.3 podría ser más ya lo vamos a realizar los cambios y me faltan el tapón.
+
+Vamos a ver creo que ya está todo perfecto.
+
+Ahí está de hecho el 3.3 queda bastante bien y tenemos nuestro arreglo de películas recientes o la cartelera
+
+en teoría que son las películas que están ahorita en el cine y podemos deslizarlo de esta manera.
+
+La verdad es que queda bastante bien.
+
+En caso de que Udes ocupara otra parte de la cartelera igual a ésta simplemente buscaríamos clonar este
+
+póster.
+
+Eso es lo que vamos a usar después y eso sería todo.
+
+Espero que hayan logrado hacer esta tarea.
+
+Esto ejercita bastante los conceptos que hemos aprendido de módulos componentes mandar parámetros uso
+
+de componentes propios de Yony que es la ISO note que ya tenemos nuestro propio Layo horizontal.
+
+No se preocupen por errores propios del Skipper está bien lo dejamos así y continuamos con el siguiente
+
+video.
+
+
+
 ## Mostrar películas populares                                                                                   04:36
 ## Mostrar pares de películas                                                                                    07:58
 ## Cargar más películas horizontalmente                                                                          11:44
