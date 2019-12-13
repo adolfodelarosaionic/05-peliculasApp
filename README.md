@@ -1257,6 +1257,278 @@ Vamos de regreso a `tab1.page.html` meteremos el título para peliculas populare
 Se mira bien pero aquí quiero hacer algo diferente quiero que estas películas populares se carguen de dos en dos es decir que en vez de tener que hacer tanto scroll para llegar a las siguientes quiero que aparezcan en columnas de dos.
 
 ## Mostrar pares de películas                                                                                    07:58
+
+Lo que quiero hacer a continuación es que aparezcan estas películas pero una encima de la otra como en pares.
+
+Entonces empecemos a crear eso.
+
+Primero necesito ver cómo puedo hacer para colocar dos películas una encima de la otra, voy a crear un componente especializado para eso:
+
+`ionic g c components/slideshowPares  --skipTest=true`
+
+Indica:
+
+```
+CREATE src/app/components/slideshow-pares/slideshow-pares.component.html (34 bytes)
+CREATE src/app/components/slideshow-pares/slideshow-pares.component.spec.ts (739 bytes)
+CREATE src/app/components/slideshow-pares/slideshow-pares.component.ts (303 bytes)
+CREATE src/app/components/slideshow-pares/slideshow-pares.component.scss (0 bytes)
+```
+
+Nuevamnte no me actualizo el `components.module.ts` lo hare manualmente para que incluya este componente y aprobecho para hacerlo exportable, para poderlo usar fuera del modulo:
+
+```js
+import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { SlideshowBackdropComponent } from './slideshow-backdrop/slideshow-backdrop.component';
+import { SlideshowPosterComponent } from './slideshow-poster/slideshow-poster.component';
+import { SlideshowParesComponent } from './slideshow-pares/slideshow-pares.component';
+import { IonicModule } from '@ionic/angular';
+import { PipesModule } from '../pipes/pipes.module';
+
+
+@NgModule({
+  declarations: [
+    SlideshowBackdropComponent,
+    SlideshowPosterComponent,
+    SlideshowParesComponent
+  ],
+  exports: [
+    SlideshowBackdropComponent,
+    SlideshowPosterComponent,
+    SlideshowParesComponent
+  ],
+  imports: [
+    CommonModule,
+    IonicModule,
+    PipesModule
+  ]
+})
+export class ComponentsModule { }
+```
+
+El objetivo es mostrar dos películas en lugar de unacomo estamos haciendo hasta ahora. Podríamos empezar a reutilizar mucho código que tenemos en nuestro Slideshow normal por ejemplo tendríamos que recibir las películas y tener las opciones del Slide, incluyamosla en `slideshow-pares.component.ts`:
+
+```js
+import { Component, OnInit, Input } from '@angular/core';
+import { Pelicula } from '../../interfaces/interfaces';
+
+@Component({
+  selector: 'app-slideshow-pares',
+  templateUrl: './slideshow-pares.component.html',
+  styleUrls: ['./slideshow-pares.component.scss'],
+})
+export class SlideshowParesComponent implements OnInit {
+
+  @Input() peliculas: Pelicula[] = [];
+
+  slideOpts = {
+    slidesPerView: 3.3,
+    freeMode: true
+  };
+
+  constructor() { }
+
+  ngOnInit() {}
+
+}
+```
+
+Ahora tomemos el código de `slideshow-poster.component.html` y copiemoslo en `slideshow-pares.component.html` 
+
+```js
+<ion-slides [options]="slideOpts">
+  <ion-slide *ngFor="let pelicula of peliculas">
+    <ion-card> 
+      <img class="poster" [src]="pelicula.poster_path | imagen">
+    </ion-card>
+  </ion-slide>
+</ion-slides>
+```
+Ahora usaremos el nuevo componente en `tab1.page.html` cambiaremos el segundo `app-slideshow-poster` por `app-slideshow-pares`:
+
+```js
+<ion-content>
+
+  <ion-grid fixed>
+    <ion-row>
+      <ion-col>
+        <h3>Películas Nuevas</h3>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+
+  <app-slideshow-backdrop [peliculas]="peliculasRecientes"></app-slideshow-backdrop>
+
+  <ion-grid fixed>
+    <ion-row>
+      <ion-col>
+        <h3>Cartelera</h3>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+
+  <app-slideshow-poster [peliculas]="peliculasRecientes"></app-slideshow-poster>
+
+  <ion-grid fixed>
+    <ion-row>
+      <ion-col>
+        <h3>Películas Populares</h3>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+
+  <app-slideshow-pares [peliculas]="peliculasPopulares"></app-slideshow-pares>
+
+</ion-content>
+```
+
+Tenemos el mismo resultado pero en un componente aparte:
+
+<img src="/images/peliculasPopulares.png">
+
+Regresemos a `slideshow-pares.component.html`, quiero crear una tarjeta encima de la otra o un post encima del otro. Vamos a hacer un pequeño cambio en el código para intentar hacer nuestro objetivo:
+
+```js
+<ion-slides [options]="slideOpts">
+  <ion-slide *ngFor="let pelicula of peliculas">
+    <ion-row>
+      <ion-col size="12"> 
+        <ion-card> 
+          <img class="poster" [src]="pelicula.poster_path | imagen">
+        </ion-card>
+      </ion-col>
+      <ion-col size="12"> 
+        <ion-card> 
+          <img class="poster" [src]="pelicula.poster_path | imagen">
+        </ion-card>
+      </ion-col>
+    </ion-row>
+  </ion-slide>
+</ion-slides>
+```
+Salvemos los cambios y miremos que tal se ve esto.
+
+<img src="/images/peliculasPopularesPares.png">
+
+Teníamos que tener una tarjeta encima de la otra así.
+
+Puedo hacer scroll y ahí tenemos aunque la separación entre tarjetas es muy grande.
+
+Podríamos colocar una propiedad `spaceBetween: -10` de `slideOpts` en `slideshow-pares.component.ts`:
+
+```js
+slideOpts = {
+  slidesPerView: 3.3,
+  freeMode: true,
+  spaceBetween: -10
+};
+```
+
+Eso hara que aparezca un poco más pegado:
+
+<img src="/images/peliculasPopularesPares-10.png">
+
+Ahora no quiero es que se repitan las películas sino que aparezcan diferentes peliculas por lo que tendremos 10 pares de películas. Eso es lo que quiero hacer.
+
+Para eso podemos tomar el arreglo de películas y transformarlo en pares. Ok cómo hacemos eso.
+
+Vamos a crear u pipe que haga eso:
+
+`ionic g pipe pipes/pares`
+
+```
+CREATE src/app/pipes/pares.pipe.spec.ts (183 bytes)
+CREATE src/app/pipes/pares.pipe.ts (203 bytes)
+UPDATE src/app/pipes/pipes.module.ts (341 bytes)
+```
+
+El objetivo es tomar la data o array y transformarlo en otro arreglo pero dentro de él van a tener arreglos de 2 y 2 2 y 2.
+
+Trabajemos con `pares.pipe.ts`.
+
+En el material adjunto les dejo el código de esta transformación porque son códigos un poquito extraño y es muy
+fácil cometer errores. Entonces lo mejor es que ya lo copiamos. El código queda así:
+
+```js
+import { Pipe, PipeTransform } from '@angular/core';
+
+@Pipe({
+  name: 'pares'
+})
+export class ParesPipe implements PipeTransform {
+
+  transform( arr: any[] ): any[] {
+
+    const pares = arr.reduce( (result, value, index, array) => {
+
+      if ( index % 2 === 0) {
+        result.push(array.slice(index, index + 2));
+      }
+      return result;
+    }, []);
+
+    console.log(pares);
+    return pares;
+ }
+
+}
+```
+Como el pipe lo vamos a usar fuera del modulo `pipes.module.ts` debemos exportar el pipe:
+
+```js
+exports: [
+  ImagenPipe,
+  ParesPipe
+],
+```
+El módulo `PipesModule` tiene que estar importado en el `components.module.ts` cosa que habiamos hecho cuando usamos el `ImagenPipe`.
+
+Por eso en el components no tengo que hacer absolutamente nada más que usar el Pipe.
+
+En `slideshow-pares.component.html` tengo mi arreglo de películas pero lo voy a pasar por el `pipe pares` se que se llama `pares` por la definición del pipe:
+
+```js
+@Pipe({
+  name: 'pares'
+})
+```
+
+Entoces pondremos:
+
+`<ion-slide *ngFor="let pelicula of peliculas | pares">`
+
+Si cargamos la página ya no veremos las imagenes pero en la consola veremos los pares de las películas:
+
+<img src="/images/paresTransformacionSinImagenes.png">
+
+
+Note el producto tengo un arreglo de 10 elementos ya no son 20 y si yo los abro ven que tengo un item y luego el siguiente item. En segunda posición del arreglo tengo otros dos y así otros dos y así sucesivamente.
+
+De esta manera estoy transformando mi arreglo en pares.
+
+Vamos a hacer cambios en `slideshow-pares.component.html`, para que ahora tome el arreglo de pares y lo pinte, el código queda así:
+
+```js
+<ion-slides [options]="slideOpts">
+  <ion-slide *ngFor="let pares of peliculas | pares">
+    <ion-row>
+      <ion-col size="12" *ngFor="let pelicula of pares"> 
+        <ion-card> 
+          <img class="poster" [src]="pelicula.poster_path | imagen">
+        </ion-card>
+      </ion-col>
+    </ion-row>
+  </ion-slide>
+</ion-slides>
+```
+
+Cuando cargamos la página:
+
+<img src="/images/pares.png">
+
+Podemos ver pares de películas diferentes que podemos desplazar lateralmente.
+
 ## Cargar más películas horizontalmente                                                                          11:44
 ## Modal con los detalles de la película                                                                         08:04
 ## Información de la película y actores                                                                          09:27
