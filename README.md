@@ -1152,6 +1152,110 @@ Al cargar la página tenemos:
 <img src="/images/dosComponentesSlide.png">
 
 ## Mostrar películas populares                                                                                   04:36
+
+Ahora vamos a crearnos un arreglo especial de las películas populares.
+
+Para eso necesito llamar un nuevo servicio.
+
+Nos vamos a la documentación de **The Movie Database API** el enlace directo a [Discover](https://developers.themoviedb.org/3/discover/movie-discover) y aquí tienen un servicio que me permite traer las películas ordenadas por popularidad con el parámetro `sort_by`, nosotros la queremos descendente.
+
+<img src="/images/discover.png">
+
+Entonces implementemos esto en nuestra aplicación.
+
+Hay que crear un nuevo servicio o un nuevo método en mi servicio. Este método se llamará `getPopulares` dentro del archivo `movies.service.ts`:
+
+```js
+getPopulares() {
+  const query = '/discover/movie?sort_by=popularity.desc';
+
+  return this.ejecutarQuery<RespuestaMDB>(query);
+}
+```
+Ya que tenemos nuestro servicio, vamos a `tab1.page.ts` para utilizarlo. Declararemos la propiedad `peliculasPopulares` que almacenara el array de películas populares. Y en `ngOnInit()` invocaremos al método del servicio `getPopulares()`:
+
+```js
+import { Pelicula } from './../interfaces/interfaces';
+import { MoviesService } from '../services/movies.service';
+import { Component, OnInit } from '@angular/core';
+
+@Component({
+  selector: 'app-tab1',
+  templateUrl: 'tab1.page.html',
+  styleUrls: ['tab1.page.scss']
+})
+export class Tab1Page implements OnInit{
+
+  peliculasRecientes: Pelicula[] = [];
+  peliculasPopulares: Pelicula[] = [];
+
+  constructor( private moviesService: MoviesService) {}
+
+  ngOnInit() {
+    this.moviesService.getFeature()
+      .subscribe( resp => {
+        //console.log('Resp', resp);
+        this.peliculasRecientes = resp.results;
+      });
+
+    this.moviesService.getPopulares()
+      .subscribe( resp => {
+        console.log('Populares: ', resp );
+        this.peliculasPopulare = resp.results;
+      });
+  }
+}
+```
+
+Si cargamos la página por lo menos el mensaje en consola de las películas populares es lo que veremos.
+
+<img src="/images/popularesJSON.png">
+
+Las voy a mostrar con el mismo componente de las películas, después lo modificaremos para que muestre de dos en dos.
+
+Vamos de regreso a `tab1.page.html` meteremos el título para peliculas populares y usaremos el componte para que las pinte:
+
+```js
+
+<ion-content>
+
+  <ion-grid fixed>
+    <ion-row>
+      <ion-col>
+        <h3>Películas Nuevas</h3>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+
+  <app-slideshow-backdrop [peliculas]="peliculasRecientes"></app-slideshow-backdrop>
+
+  <ion-grid fixed>
+    <ion-row>
+      <ion-col>
+        <h3>Cartelera</h3>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+
+  <app-slideshow-poster [peliculas]="peliculasRecientes"></app-slideshow-poster>
+
+  <ion-grid fixed>
+    <ion-row>
+      <ion-col>
+        <h3>Películas Populares</h3>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+
+  <app-slideshow-poster [peliculas]="peliculasPopulares"></app-slideshow-poster>
+
+</ion-content>
+```
+
+<img src="/images/peliculasPopulares.png">
+
+Se mira bien pero aquí quiero hacer algo diferente quiero que estas películas populares se carguen de dos en dos es decir que en vez de tener que hacer tanto scroll para llegar a las siguientes quiero que aparezcan en columnas de dos.
+
 ## Mostrar pares de películas                                                                                    07:58
 ## Cargar más películas horizontalmente                                                                          11:44
 ## Modal con los detalles de la película                                                                         08:04
