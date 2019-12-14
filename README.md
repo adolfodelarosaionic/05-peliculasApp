@@ -1530,6 +1530,265 @@ Cuando cargamos la página:
 Podemos ver pares de películas diferentes que podemos desplazar lateralmente.
 
 ## Cargar más películas horizontalmente                                                                          11:44
+
+Es momento de que cuando lleguemos al final de este Slide de películas populares pongamos un botón que nos permita cargar las demás películas, mediante el API del Whippet se puede detectar cuando está al final del Slide y hacer el procedimiento automáticamente, pero en este caso vamos a hacerlo con un botón.
+
+Lo primero sería colocar ese botón en el `slideshow-pares.component.html` ¿En qué lugar sería conveniente para colocar ese botón?.
+
+Tenemos una etiqueta `<ion-slides>` y dentro de esta metemos todos los `<ion-slide>` ahora solo tenemos el slide de las películas polpulares.
+
+Junto a este Slide pondremos otro.
+
+```js
+<ion-slides [options]="slideOpts">
+  <ion-slide *ngFor="let pares of peliculas | pares">
+    <ion-row>
+      <ion-col size="12" *ngFor="let pelicula of pares"> 
+        <ion-card> 
+          <img class="poster" [src]="pelicula.poster_path | imagen">
+        </ion-card>
+      </ion-col>
+    </ion-row>
+  </ion-slide>
+  <ion-slide>
+    <ion-button expand="full"
+                size = "large"
+                (click)= "onClick()">
+      <ion-icon name="add"
+                slot="icon-only"></ion-icon>
+    </ion-button>
+  </ion-slide>
+</ion-slides>
+```
+
+En `slideshow-pares.component.ts` añadimos el método `onClick()`:
+
+```js
+import { Component, OnInit, Input } from '@angular/core';
+import { Pelicula } from '../../interfaces/interfaces';
+
+@Component({
+  selector: 'app-slideshow-pares',
+  templateUrl: './slideshow-pares.component.html',
+  styleUrls: ['./slideshow-pares.component.scss'],
+})
+export class SlideshowParesComponent implements OnInit {
+
+  @Input() peliculas: Pelicula[] = [];
+
+  slideOpts = {
+    slidesPerView: 3.3,
+    freeMode: true,
+    spaceBetween: -10
+  };
+
+  constructor() { }
+
+  ngOnInit() {}
+
+  onClick(){
+    conole.log('Cargar más');
+  }
+
+}
+```
+
+Al acargamar la aplicación tenemos:
+
+<img src="/images/botonMas.png">
+
+Se mira relativamente aceptable pero la posición no es la correcta entonces vamos a tener que hacer un par de cosas en el slide.
+
+Vamos a agregarle una clase llamada Slide y otra al botón:
+
+```js
+<ion-slide class="slide-mas">
+  <ion-button expand="full"
+              class="btn-mas"
+              size = "large"
+              (click)= "onClick()">
+    <ion-icon name="add"
+              slot="icon-only"></ion-icon>
+  </ion-button>
+</ion-slide>
+```
+
+En `slideshow-pares.component.scss` definiremos esas dos clases:
+
+```css
+.slide-mas{
+  height: 300px;
+}
+
+.btn.mas{
+  position:relative;
+  top: 23%;
+}
+```
+
+Con estos cambios tenemos:
+
+<img src="/images/botonMasCentrado.png">
+
+Note que cuando yo toco este botón me llama el método de cargar más, ahora lo que yo tendría que hacer es decirle a mi aplicación que tiene que cargar las siguientes películas.
+
+Hay varias formas de hacer esto, por ahora el servicio solo regresa la página 1. En pocas palabras tengo que emitir una acción en el componentes pares, que le indique al padre cargar más películas popilares.
+
+Vamos a `slideshow-pares.component.ts` ocuparemos el @Output para poder emitir algo, aquí voy a emitir un evento llamado cargarMas, nuestro código queda así:
+
+```js
+import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
+import { Pelicula } from '../../interfaces/interfaces';
+
+@Component({
+  selector: 'app-slideshow-pares',
+  templateUrl: './slideshow-pares.component.html',
+  styleUrls: ['./slideshow-pares.component.scss'],
+})
+export class SlideshowParesComponent implements OnInit {
+
+  @Input() peliculas: Pelicula[] = [];
+  @Output cargarMas = new EventEmitter();
+
+  slideOpts = {
+    slidesPerView: 3.3,
+    freeMode: true,
+    spaceBetween: -10
+  };
+
+  constructor() { }
+
+  ngOnInit() {}
+
+  onClick() {
+    this.cargarMas.emit();
+  }
+
+}
+```
+
+De esta manera el `slideshow-pares` va a emitirle al padre que hay que cargar más películas.
+
+Regresemos a `tab1.page.html` y escuchemos ese evento.
+
+```js
+<app-slideshow-pares [peliculas]="peliculasPopulares"
+                       (cargarMas)="cargarMas()">
+</app-slideshow-pares>
+```
+
+No necesito recibir el `$event` porque no estoy emitiendo nada simplemente estoy diciéndole que cuando se presione el botón llame a la función `cargarMas()`, construyamos ese
+método en `tab1.page.ts` tendremos que hacer algunas modificaciones ya que ese método es muy similar al que ya teniamos `getPopulares()`, pero para no tener duplicado haremos algunos ajustes, por lo que el código queda asi:
+
+```js
+...
+export class Tab1Page implements OnInit{
+
+  peliculasRecientes: Pelicula[] = [];
+  peliculasPopulares: Pelicula[] = [];
+
+  constructor( private moviesService: MoviesService) {}
+
+  ngOnInit() {
+    this.moviesService.getFeature()
+      .subscribe( resp => {
+        //console.log('Resp', resp);
+        this.peliculasRecientes = resp.results;
+      });
+
+    this.getPopulares();
+  }
+
+  getPopulares(){
+    this.moviesService.getPopulares()
+      .subscribe( resp => {
+        this.peliculasPopulares = resp.results;
+      });
+  }
+
+  cargarMas(){
+    getPopulares();
+  }
+}
+
+```
+
+Tenemos que modificar el servicio `getPopulares` en `moviesservice.ts` para parametrizar que reciba la página que necesitamos cargar.
+
+```js
+...
+export class MoviesService {
+
+  private popularesPage = 0;
+
+  constructor(private http: HttpClient) { }
+  ...
+  getPopulares() {
+
+    this.popularesPage++;
+
+    const query = `/discover/movie?sort_by=popularity.desc&page=${ this.popularesPage }`;
+
+    return this.ejecutarQuery<RespuestaMDB>(query);
+  }
+  ...
+}
+
+```
+Entonces bajo que llevo el final son 10 son 20 películas pero es una línea de 10 toco más y vamos a ver qué sucedió.
+
+Ok sí cambió y se trajo las nuevas películas pero le cayó encima a las anteriores.
+
+<img src="/images/botonMasCargaMas.png">
+
+Y por qué creen que sucede eso.
+
+Revisemos nuestros servicios `getPopulares` en `tab1.page.ts`:
+
+```js
+getPopulares(){
+  this.moviesService.getPopulares()
+    .subscribe( resp => {
+      this.peliculasPopulares = resp.results;
+    });
+}
+```
+Si observamos estamos remplazando lo que tenia el array de `peliculasPopulares` por lo nuevo que recupera, y lo que deberiamos hacer es añadir lo que se recupera:
+
+```js
+getPopulares(){
+    this.moviesService.getPopulares()
+      .subscribe( resp => {
+        console.log("Populares: ", resp.results);
+        this.peliculasPopulares.push( ...resp.results );
+      });
+  }
+```
+En teoría lo anterior deberia funcionar pero por algún error no carga el array lo trae :
+
+<img src="/images/botonMasPushError.png">
+
+Aquí sucedió algo raro, el array de películas populares llegan, pero no se traslada pareciera como que no se traslada.
+
+Este error es difícil de ver es porque tenemos un `pipe` que filtra y no lo está actualizando no es un `pipe` asíncrono por eso no está tan pendiente de los cambios de las nuevas ediciones de ese arreglo.
+
+Entonces aquí vamos a tener que hacer algo un poquito diferente.
+
+Hagamos lo siguiente:
+
+```js
+getPopulares(){
+    this.moviesService.getPopulares()
+      .subscribe( resp => {
+        const arrTemp = [ ...this.peliculasPopulares, ...resp.results ];
+        this.peliculasPopulares = arrTemp;
+      });
+  }
+```
+Estamos creando un array que va concatenando los resultados obtenidos y los pone en el array. El resultado ya se ve continuo:
+
+<img src="/images/botonMasAcumula.png">
+
 ## Modal con los detalles de la película                                                                         08:04
 ## Información de la película y actores                                                                          09:27
 ## Mostrar detalles de la película                                                                               10:44
