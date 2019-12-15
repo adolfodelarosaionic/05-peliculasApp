@@ -1966,6 +1966,263 @@ Una vez hecho esto al pulsar en cualquier película me llevara al detalle.
 <img src="/images/detalleWorksID.png">
 
 ## Información de la película y actores                                                                          09:27
+
+En este momento nosotros al hacer clic en una imagen ya nos trae lo que es el ID de la película.
+
+Pero qué hacemos con ese ID.
+
+Si nosotros vamos a la documentación de la Movie DB, tenemos la información para obtener [detalles de la película](https://developers.themoviedb.org/3/movies/get-movie-details) vemos claramente que el End Point que debemos usar es `GET
+/movie/{movie_id}`:
+
+<img src="/images/get-movie-details.png">
+
+Pero no tenemos toda la información como por ejemplo el casting o los actores que estarán en la película.
+
+Para los actores hay otro servicio que se llama [Get Credit]() el cual tiene el End Poin `GET
+/movie/{movie_id}/credits` para recuperar los datos:
+
+<img src="/images/get-movie-credits.png">
+
+Esto nos regresa los actores con su fotografía entre otras cosas que utilizaremos.
+
+Así que comencemos primero con el de detalles de la película.
+
+Regresemos a nuestro servicio `movies.service.ts` que ahí es donde tenemos centralizada toda la lógica. Empecemos a crearnos nuestro servicio para obtener el detalle de la película.
+
+El nombre de este método será `getPeliculaDetalle(id: string)` el cual recibe el Id de la película, y ocupamos el URL `/movie{movie_id}`,  aquí necesitamos un pequeño truco para pegar los demas parámetros que añadimos ya que siempre el primer parámetro se separa con `?` y los demas con `&` y como tenemos:
+
+```js
+query = URL + query;
+query += `&api_key=${ apiKey }&language=es&include_image_language=es`;
+```
+
+Se le va a adjuntar al URL `/movie{movie_id}` directamente el `&` por lo que tendremos un error. Para esto añadirademos un parámetro inicial que no ocupa el servicio pero sirve para formar bien el URL, por lo que nuestro método `getPeliculaDetalle()` queda así:
+
+```js
+getPeliculaDetalle( id: string ){
+  return this.ejecutarQuery(`/movie/${ id }?a=1`);
+}
+```
+
+Ahora abramos nuestro componente de detalle `detalle.component.ts`, donde inyectaremos el sevicio, y lo invocaremos en el `ngOnInit()`:
+
+```js
+import { Component, OnInit, Input } from '@angular/core';
+import { MoviesService } from '../../services/movies.service';
+
+@Component({
+  selector: 'app-detalle',
+  templateUrl: './detalle.component.html',
+  styleUrls: ['./detalle.component.scss'],
+})
+export class DetalleComponent implements OnInit {
+
+  @Input() id;
+
+  constructor( private moviesService: MoviesService ) { }
+
+  ngOnInit() {
+    //console.log('ID', this.id);
+
+    this.moviesService.getPeliculaDetalle( this.id )
+      .subscribe( resp => {
+        console.log( resp );
+      });
+  }
+}
+```
+Si cargamos la App y damos en una película ya nos carga los detalles de la película:
+
+<img src="/images/servicioDetalles.png">
+
+Hemos puesto un `console.log` en `ejecutarQuery` para que nos regrese los URL que vamos ejecutando. De esta manera podemos ver el URL que estamos ejecutando para traer los detalles de la película:
+
+`https://api.themoviedb.org/3/movie/512200?a=1&api_key=5cc470f991922e74ecfac8aaed7d9350&language=es&include_image_language=es`
+
+Lo podemos cargar en el Navegador o en Postman:
+
+<img src="/images/servicioDetallesJSON.png">
+
+Una vez hecho esto copiamos todo el JSON y nos vamos a la Interface para crear las interfaces para estos datos, abrimos el archivo `interfaces.ts` y pegamos allí el JSON con `Ctrl + Alt + V`, me generara todas las interfaces, la primera de ellas se llama `RootObject` le pondremos `PeliculaDetalle` y lo pondremos que es exportable para poder usarla fuera de aquí:
+
+```js
+export interface PeliculaDetalle {
+  adult: boolean;
+  backdrop_path: string;
+  belongs_to_collection: Belongstocollection;
+  budget: number;
+  genres: Genre[];
+  homepage: string;
+  id: number;
+  imdb_id: string;
+  original_language: string;
+  original_title: string;
+  overview: string;
+  popularity: number;
+  poster_path: string;
+  production_companies: Productioncompany[];
+  production_countries: Productioncountry[];
+  release_date: string;
+  revenue: number;
+  runtime: number;
+  spoken_languages: Spokenlanguage[];
+  status: string;
+  tagline: string;
+  title: string;
+  video: boolean;
+  vote_average: number;
+  vote_count: number;
+}
+
+interface Spokenlanguage {
+  iso_639_1: string;
+  name: string;
+}
+
+interface Productioncountry {
+  iso_3166_1: string;
+  name: string;
+}
+
+interface Productioncompany {
+  id: number;
+  logo_path?: string;
+  name: string;
+  origin_country: string;
+}
+
+interface Genre {
+  id: number;
+  name: string;
+}
+
+interface Belongstocollection {
+  id: number;
+  name: string;
+  poster_path: string;
+  backdrop_path: string;
+}
+```
+
+Ahora que ya tenemos la interfaz podemos regresar a `movies.service.ts` e indicar en `getPeliculaDetalle` que lo que retorna es de tipo `PeliculaDetalle`:
+
+```js
+getPeliculaDetalle( id: string ){
+  return this.ejecutarQuery<peliculaDetalle>(`/movie/${ id }?a=1`);
+}
+```
+
+Si cargamos la App tenemos los mismos resultados pero ya hemos implementado la Interfaz para facilitar la recuperación de los campos del Detalle de la película.
+
+<img src="/images/servicioDetallesJSON.png">
+
+
+### Créditos o Actores
+También vamos a ocupar los créditos o actores que salen en la película. Para los actores hay otro servicio que se llama [Get Credit]() el cual tiene el End Poin `GET
+/movie/{movie_id}/credits` para recuperar los datos:
+
+<img src="/images/get-movie-credits.png">
+
+Regresemos a nuestro servicio `movies.service.ts` y hagamos un método llamado `getActoresPelicula( id: string )`:
+
+```js
+getActoresPelicula( id: string ){
+  return this.ejecutarQuery<PeliculaDetalle>(`/movie/${ id }/credits?a=1`);
+}
+```
+
+Ya cambiaremos el tipo que nos debe regresar. Vamos a `detalle.component.ts` para invocar el nuevo servicio:
+
+```js
+this.moviesService.getActoresPelicula( this.id )
+    .subscribe( resp => {
+      console.log( resp );
+    });
+}
+```
+Esto ya debería traer la información de los Actores, si cargamos la App ya vemos ambos servicios invocados Detalle y Créditos con sus respectivos resultados:
+
+<img src="/images/detallesYcreditos.png">
+
+Vamos a copiar el URL de los créditos `https://api.themoviedb.org/3/movie/512200/credits?a=1&api_key=5cc470f991922e74ecfac8aaed7d9350&language=es&include_image_language=es` y cargarlo en el navegador:
+
+<img src="/images/servicioCreditosJSON.png">
+
+Copiemos el JSON y peguemoslo en `ìnterfaces.ts` para crear las interfaces para esta respuesta:
+
+Nos genera:
+
+
+```js
+
+interface RootObject {
+  id: number;
+  cast: Cast[];
+  crew: Crew[];
+}
+
+interface Crew {
+  credit_id: string;
+  department: string;
+  gender: number;
+  id: number;
+  job: string;
+  name: string;
+  profile_path?: string;
+}
+
+interface Cast {
+  cast_id: number;
+  character: string;
+  credit_id: string;
+  gender: number;
+  id: number;
+  name: string;
+  order: number;
+  profile_path?: string;
+}
+```
+Vamos a cambiar el nombre a `RootObject` por `RespuestaCredits` y hagamos que sean exportables las tres nuevas interfaces el código queda así:
+
+```js
+export interface RespuestaCredits {
+  id: number;
+  cast: Cast[];
+  crew: Crew[];
+}
+
+export interface Crew {
+  credit_id: string;
+  department: string;
+  gender: number;
+  id: number;
+  job: string;
+  name: string;
+  profile_path?: string;
+}
+
+export interface Cast {
+  cast_id: number;
+  character: string;
+  credit_id: string;
+  gender: number;
+  id: number;
+  name: string;
+  order: number;
+  profile_path?: string;
+}
+```
+Regresemos al servicio `movies.service.ts` para indicar que el servicio `getActoresPelicula` retornara el tipo `RespuestaCredits`:
+
+```js
+getActoresPelicula( id: string ){
+  return this.ejecutarQuery<RespuestaCredits>(`/movie/${ id }/credits?a=1`);
+}
+```
+Ya reuperamos los datos de los servicios Detalle y Créditos  ya tenemos las interfaces:
+
+<img src="/images/servDetalleCreditos.png">
+
 ## Mostrar detalles de la película                                                                               10:44
 ## Mostrar detalles de la película - Parte 2                                                                     13:21
 ## Diseño de la página de búsqueda de películas                                                                  08:04
