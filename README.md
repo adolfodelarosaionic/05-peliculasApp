@@ -1790,6 +1790,181 @@ Estamos creando un array que va concatenando los resultados obtenidos y los pone
 <img src="/images/botonMasAcumula.png">
 
 ## Modal con los detalles de la película                                                                         08:04
+
+Es momento de trabajar en los detalles de las películas es decir yo hago clic en alguna película y quiero que se abra una página en la cual aparezca la descripción de la misma como detalles, el póster, el backdrop_path, el rating, los actores, etc.
+
+Vamos a trabajar con eso pero primero hay que implementarse un modal. La pantalla del modal la vamos a crear con:
+
+`ionic g c components/detalle --skipTests=true`
+
+Nos indica:
+
+```
+CREATE src/app/components/detalle/detalle.component.html (26 bytes)
+CREATE src/app/components/detalle/detalle.component.spec.ts (689 bytes)
+CREATE src/app/components/detalle/detalle.component.ts (272 bytes)
+CREATE src/app/components/detalle/detalle.component.scss (0 bytes)
+```
+Nuevamente no me ha modificado el `components.module.ts` por lo que lo modificare manualmente para incluir este nuevo componente y hacerlo exportable:
+
+```js
+import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { SlideshowBackdropComponent } from './slideshow-backdrop/slideshow-backdrop.component';
+import { SlideshowPosterComponent } from './slideshow-poster/slideshow-poster.component';
+import { SlideshowParesComponent } from './slideshow-pares/slideshow-pares.component';
+import { DetalleComponent } from './detalle/detalle.component';
+import { IonicModule } from '@ionic/angular';
+import { PipesModule } from '../pipes/pipes.module';
+
+
+@NgModule({
+  declarations: [
+    SlideshowBackdropComponent,
+    SlideshowPosterComponent,
+    SlideshowParesComponent,
+    DetalleComponent
+  ],
+  exports: [
+    SlideshowBackdropComponent,
+    SlideshowPosterComponent,
+    SlideshowParesComponent,
+    DetalleComponent
+  ],
+  imports: [
+    CommonModule,
+    IonicModule,
+    PipesModule
+  ]
+})
+export class ComponentsModule { }
+```
+
+Nosotros tendríamos que lanzar el modal cuando hacemos clic en una película nueva, de la cartelera o de las populares.
+
+Entonces comencemos a implementarlo en el de películas nuevas por ejemplo. Nos vamos a `slideshow-backdrop.component.ts` para implementar el modal,tenemos que inyectar `ModalController` en el constructor para poder utilizarlo, importandolo de `@ionic/angular`.
+
+Ahora hay que detectar el evento clic en alguna imagen, vamos a  `slideshow-backdrop.component.html`. Lo llamaremos `verDetalle( pelicula.id)` y mandaremos como parámetro el id de la película, esto lo haremos cuando de click en la tarjeta:
+
+```js
+<ion-card (click)="verDetalle( pelicula.id)"> 
+  <img [src]="pelicula.backdrop_path | imagen">
+</ion-card>
+```
+
+Implementemos el método `verDetalle()` en `slideshow-backdrop.component.ts`, nuestro código final queda así:
+
+```js
+import { Component, OnInit, Input } from '@angular/core';
+import { Pelicula } from '../../interfaces/interfaces';
+import { ModalController } from '@ionic/angular';
+import { DetalleComponent } from '../detalle/detalle.component';
+
+@Component({
+  selector: 'app-slideshow-backdrop',
+  templateUrl: './slideshow-backdrop.component.html',
+  styleUrls: ['./slideshow-backdrop.component.scss'],
+})
+export class SlideshowBackdropComponent implements OnInit {
+
+  @Input() peliculas: Pelicula[] = [];
+
+  slideOpts = {
+    slidesPerView: 1.2,
+    freeMode: true
+  };
+
+  constructor(private modalCtrl: ModalController ) { }
+
+  ngOnInit() {}
+
+  async verDetalle( id: string ){
+    const modal = await this.modalCtrl.create({
+      component: DetalleComponent,
+      componentProps: {
+        id
+      }
+    });
+    modal.present();
+  }
+}
+```
+
+Al cargar la App y pulsar en una película nueva tenemos el error:
+
+`Error: No component factory found for DetalleComponent. Did you add it to @NgModule.entryComponents?`
+
+<img src="/images/peliculaNuevaError.png">
+
+Nos dice que nos falta agregar en los `entryComponents`, regresemos a `components.module.ts` donde tenemos que declarar que el `DetalleComponent` es un `entryComponents`, es decir que se puede crear dinámicamente mediante Angular:
+
+```js
+...
+@NgModule({
+  entryComponents: [
+    DetalleComponent
+  ],
+  declarations: [
+...
+```
+Al hacer esta modificación y pulsar en una película nueva ya nos lleva al detalle:
+
+<img src="images/detalleWorks.png">
+
+Sería bueno en el detalle recibir el id de la película, abramos el detalle `detalle.component.ts` y lo recibíamos con un `@Input`:
+
+```js
+import { Component, OnInit, Input } from '@angular/core';
+
+@Component({
+  selector: 'app-detalle',
+  templateUrl: './detalle.component.html',
+  styleUrls: ['./detalle.component.scss'],
+})
+export class DetalleComponent implements OnInit {
+
+  @Input() id;
+
+  constructor() { }
+
+  ngOnInit() {
+    console.log('ID', this.id);
+  }
+
+}
+```
+
+Vamos a probar nuevamente, recargar la página tocó una película nueva:
+
+<img src="/images/detalleWorksID.png">
+
+Vemos como ya recibimos el ID.
+
+### Tarea
+
+Ahora hagamos que tanto al pulsar las películas de la cartelera como las películas populares nos lleve al detalle. Bastara por un lado añadir en el `<ion-card` en los archicos `slideshow-poster.component.html` y en `slideshow-pares.component.html` la llamada al evento es decir:
+
+```js
+<ion-card (click)="verDetalle( pelicula.id)">
+```
+ Y en `slideshow-poster.component.ts` y en `slideshow-pares.component.ts` la implementación del método `verDetalle()`:
+
+ ```js
+ async verDetalle( id: string ){
+    const modal = await this.modalCtrl.create({
+      component: DetalleComponent,
+      componentProps: {
+        id
+      }
+    });
+    modal.present();
+  }
+ ```
+
+Una vez hecho esto al pulsar en cualquier película me llevara al detalle.
+
+<img src="/images/detalleWorksID.png">
+
 ## Información de la película y actores                                                                          09:27
 ## Mostrar detalles de la película                                                                               10:44
 ## Mostrar detalles de la película - Parte 2                                                                     13:21
