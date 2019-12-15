@@ -2219,11 +2219,176 @@ getActoresPelicula( id: string ){
   return this.ejecutarQuery<RespuestaCredits>(`/movie/${ id }/credits?a=1`);
 }
 ```
-Ya reuperamos los datos de los servicios Detalle y Créditos  ya tenemos las interfaces:
+Ya recuperamos los datos de los servicios Detalle y Créditos  ya tenemos las interfaces:
 
 <img src="/images/servDetalleCreditos.png">
 
 ## Mostrar detalles de la película                                                                               10:44
+
+Empecemos con `detalle.component.ts`  vamos a meter la propiedad `pelicula: PeliculaDetalle;` y en el método `getPeliculaDetalle` le asignaremos lo que recuperamos del servicio:
+
+```js
+this.moviesService.getPeliculaDetalle( this.id )
+  .subscribe( resp => {
+    console.log( resp );
+    this.pelicula = resp;
+  });
+```
+
+Es momento de trabajar con la página de detalle. Regresemos a `detalle.component.html` empecemos acá porque hay bastante que hacer.
+
+Coloquemos un `ion-content` es para decirle a Ionic que use todo el ancho que dispone de la página es decir inclusive que pueda hacer scroll y otras cosas. Epecemos poniendo el siguiente código:
+
+```js
+<ion-content>
+  <ion-label>
+    <h1>{{ pelicula.title }}</h1>
+  </ion-label>
+</ion-content>
+```
+
+Si probamos nuestro código hasta aquí, veremos que se nos muestra un error:
+
+<img src="/images/detalleError">
+
+Apareció el nombre de la película pero tengo este error que dice `Cannot read property 'title' of undefined`.
+
+Esto es porque en el momento en que la página se cargó no existía la propiedad `pelicula` y es como si tuvieramos `undefine.title` lo que genera un error JavaScript.
+
+Aquí tenemos que hacer un par de arreglos podríamos colocar un `ngIf` y que no se muestre esto hasta que tengamos la película o bien se puede inicializar la pripiedad a un objeto vacío:
+
+`pelicula: PeliculaDetalle = {};`
+
+Aunque voy a tener un error que me dice de que el objeto vacío no cumple los detalles de la interfaz entonces podríamos modificar esta interfaz y poner todas las propiedades como opcionales:
+
+```js
+export interface PeliculaDetalle {
+  adult?: boolean;
+  backdrop_path?: string;
+  belongs_to_collection?: Belongstocollection;
+  budget?: number;
+  genres?: Genre[];
+  homepage?: string;
+  id?: number;
+  imdb_id?: string;
+  original_language?: string;
+  original_title?: string;
+  overview?: string;
+  popularity?: number;
+  poster_path?: string;
+  production_companies?: Productioncompany[];
+  production_countries?: Productioncountry[];
+  release_date?: string;
+  revenue?: number;
+  runtime?: number;
+  spoken_languages?: Spokenlanguage[];
+  status?: string;
+  tagline?: string;
+  title?: string;
+  video?: boolean;
+  vote_average?: number;
+  vote_count?: number;
+}
+```
+
+Recuerden que las interfaces en general no tienen una traducción directa a Javascript por lo cual este código no va a afectar absolutamente nada en el html.
+
+Con estos cambios ya no existe el error:
+
+<img src="/images/detalleSinError.png">
+
+Si regreso a la aplicación e intento cargar nuevamente la película van a ver que ya no tenemos el error y todo funciona como nosotros estamos esperando pero ahí queda a discreción de ustedes cómo quieren manejar ese error.
+
+Para algunos es más fácil un `ngIf`.
+
+Para mí fue más fácil modificar la interface y hacer todos los valores opcionales.
+
+Ok regresemos al HTML y empecemos a hacer un par de detalles estéticos. En el archivo `detalle.component.scss` vamos a copiar el siguiente código:
+
+```css
+
+.poster-detalle-sobre {
+    position: relative;
+    top: -75px;
+    left: -10px;
+    margin-bottom: -75px;
+}
+
+.titulo {
+    width: 100%;
+    position: absolute;
+    color: white;
+    background-color: red;
+    padding: 5px 5px 40px 5px;
+
+
+    /* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#000000+0,000000+100&0.65+0,0+100;Neutral+Density */
+    background: -moz-linear-gradient(top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0) 100%); /* FF3.6-15 */
+    background: -webkit-linear-gradient(top, rgba(0,0,0,0.65) 0%,rgba(0,0,0,0) 100%); /* Chrome10-25,Safari5.1-6 */
+    background: linear-gradient(to bottom, rgba(0,0,0,0.65) 0%,rgba(0,0,0,0) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#a6000000', endColorstr='#00000000',GradientType=0 ); /* IE6-9 */
+}
+
+.titulo h1{
+    position: absolute;
+    top: 28px;
+    left: 5px;
+}
+
+.card-actor {
+    height: 210px;
+}
+
+.actor-name {
+    position: relative;
+    top:15px;
+}
+```
+Ahora vamos a completar `detalle.component.html`:
+
+```js
+<ion-content>
+  <ion-label class="titulo">
+    <h1>{{ pelicula.title }}</h1>
+  </ion-label>
+  <img [src]="pelicula.backdrop_path | imagen" *ngIf="pelicula.backdrop_path">
+  <ion-grid>
+    <ion-row>
+      <ion-col size="4" class="poster-detalle-sobre">
+        <ion-card class="poster">
+          <img [src]="pelicula.poster_path | imagen"
+              class="poster"
+              *ngIf="pelicula.poster_path">
+        </ion-card>
+      </ion-col>
+      <ion-col>
+        <ion-item>
+          <ion-icon slot="start" name="thumbs-up" color="primary"></ion-icon>
+          <ion-label>Rating</ion-label>
+          <ion-note slot="end" color="primary">{{ pelicula.vote_average }}</ion-note>
+        </ion-item>
+        <ion-item>
+          <ion-icon slot="start" name="contacts" color="primary"></ion-icon>
+          <ion-label>Votos</ion-label>
+          <ion-note slot="end" color="primary">{{ pelicula.vote_count }}</ion-note>
+        </ion-item>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+  <ion-grid fixed>
+    <ion-row>
+      <ion-col size=12>
+        <ion-label>{{ pelicula.overview }}</ion-label>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+</ion-content>
+```
+
+El resultado es el siguiente:
+
+<img src="/images/detalle1Parte.png">
+
 ## Mostrar detalles de la película - Parte 2                                                                     13:21
 ## Diseño de la página de búsqueda de películas                                                                  08:04
 ## Servicio para buscar películas                                                                                04:24

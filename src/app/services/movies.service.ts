@@ -19,7 +19,7 @@ export class MoviesService {
 
     query = URL + query;
     query += `&api_key=${ apiKey }&language=es&include_image_language=es`;
-    console.log(query);
+    //console.log(query);
     return this.http.get<T>( query );
   }
 
