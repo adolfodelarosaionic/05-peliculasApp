@@ -2249,7 +2249,7 @@ Coloquemos un `ion-content` es para decirle a Ionic que use todo el ancho que di
 
 Si probamos nuestro código hasta aquí, veremos que se nos muestra un error:
 
-<img src="/images/detalleError">
+<img src="/images/detalleError.png">
 
 Apareció el nombre de la película pero tengo este error que dice `Cannot read property 'title' of undefined`.
 
