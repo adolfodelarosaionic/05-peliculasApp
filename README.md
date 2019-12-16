@@ -2390,6 +2390,146 @@ El resultado es el siguiente:
 <img src="/images/detalle1Parte.png">
 
 ## Mostrar detalles de la película - Parte 2                                                                     13:21
+
+Continuando con la estructura de la pagina de detalle, lo primero que haremos es limitar el texto de la descripción del texto a 150 caracteres y se presionamos `Leer más` se presenta el texto restante, eso en angular es muy sencillo. Primero definamos la variable en el archivo `detalle.component.ts`:
+
+`oculto = 150;`
+
+Y en `detalle.component.html` implementemos esto:
+
+```js
+<ion-grid fixed>
+    <ion-row>
+      <ion-col size=12>
+        <ion-label>{{ pelicula.overview | slice: 0: oculto }}</ion-label>
+        <ion-label *ngIf="oculto !== 5000">... </ion-label>
+        <ion-label color="primary"
+                   (click)="oculto = 5000"
+                   *ngIf="oculto !== 5000">Leer más!</ion-label>
+        <ion-label color="primary"
+                   (click)= "oculto = 150"
+                   *ngIf="oculto === 5000">Leer menos!</ion-label>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+</ion-content>
+```
+
+### Generos de las películas
+
+Las películas también traen géneros. Que es un array que se almacena en `genres`.
+
+Puedo utilizar estos géneros para pintar abajo de la descripción. Usaremos el tag `ion-chip`, que nos dibuja una pequeñas "chips" muy monas. El código para implementar esto es:
+
+```js
+<ion-row>
+  <ion-col size="12">
+    <ion-chip *ngFor="let genero of pelicula.genres"
+              color="primary">
+      <ion-label>{{ genero.name }}</ion-label>
+    </ion-chip>
+  </ion-col>
+</ion-row>
+```
+### Mostrar los Actores
+
+Lo primero que tenemos que hacer es declarar una propiedad en `detalle.component.ts` para recuperar la información de los actores:
+
+```js
+...
+import { PeliculaDetalle, Cast } from '../../interfaces/interfaces';
+...
+actores: Cast[] = [];
+...
+this.moviesService.getActoresPelicula( this.id )
+    .subscribe( resp => {
+      //console.log( resp );
+      this.actores = resp.cast;
+    });
+```
+
+Ahora mostramos los actores justo debajo. Usaremos un nuevo `ion-grid` para poner el título **Actores**. Los actores los recuperamos del servicio que regresa los actores en el `cast`, estos los pondremos dentro de un Slider.
+
+```js
+<ion-grid fixed>
+  <ion-row>
+    <ion-col>
+      <ion-label>Actores</ion-label>
+    </ion-col>
+  </ion-row>
+</ion-grid>
+<ion-slides [options]="slideOptActores">
+  <ion-slide *ngFor="let actor of actores">
+    <ion-card class="card-actor">
+      <img *ngIf="!actor.profile_path" src="/assets/no-avatar.jpg">
+      <img *ngIf="actor.profile_path" [src]="actor.profile_path | imagen">
+      <ion-label class="actor-name"> {{ actor.name }}</ion-label>
+    </ion-card>
+  </ion-slide>
+</ion-slides>
+```
+
+En `detalle.component.ts` definimos `slideOptActores`:
+
+```js
+slideOptActores = {
+  slidesPerView:3.3,
+  freeMode: true,
+  spacebetween: -5
+}
+```
+
+Si probamos nuestra App tenemos:
+
+<img src="/images/slideActores.png">
+
+Ya vemos los Actores de la película podemos desplazarnos y si el JSON no regresa una imagen ponemos una por default.
+
+### Cerrar el Modal
+
+Lo único que nos hace falta para poder terminar esta parte de los detalles de la película es poder cerrar la modal. Lo trabajaremos en un `ion-footer`.
+
+```js
+<ion-footer no-border>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button (click)="regresar()">
+        <ion-icon slot="start" name="arrow-round-back"></ion-icon>
+        <ion-label>Regresar</ion-label>
+      </ion-button>
+    </ion-buttons>
+    <ion-buttons slot="end">
+      <ion-button (click)="favorito()">
+        <ion-label>Favorito</ion-label>
+        <ion-icon slot="end" name="star-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-footer>
+```
+
+E implementamos los métodos `regresar()` y `favorito()` en `detalle.component.ts`:
+
+```js
+...
+import { ModalController } from '@ionic/angular';
+...
+constructor( private moviesService: MoviesService,
+               private modalCtrl: ModalController ) { }
+...
+regresar() {
+  this.modalCtrl.dismiss();
+}
+
+favorito() {
+  console.log("Presionaste Favoritos...");
+}
+```
+
+Los resultados que tenemos son:
+
+<img src="/images/regresar.png">
+
 ## Diseño de la página de búsqueda de películas                                                                  08:04
 ## Servicio para buscar películas                                                                                04:24
 ## Diseño de la página de búsqueda de películas                                                                  11:05
