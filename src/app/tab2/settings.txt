@@ -1,0 +1,10 @@
+// Coloque su configuración en este archivo para sobrescribir la configuración predeterminada.
+{
+    // Controla el tamaño de fuente en píxeles.
+  "editor.fontSize": 25,
+  "window.zoomLevel": 0,
+  "liveServer.settings.donotShowInfoMsg": true,
+  "liveServer.settings.CustomBrowser": "chrome",
+  "jshint.enable": false,
+  "workbench.colorTheme": "Material Theme"
+}

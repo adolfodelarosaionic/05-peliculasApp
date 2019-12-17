@@ -2531,6 +2531,76 @@ Los resultados que tenemos son:
 <img src="/images/regresar.png">
 
 ## Diseño de la página de búsqueda de películas                                                                  08:04
+
+Ahora le toca el momento a la página de buscar películas. La idea es que las personas puedan escribir el título de la película o cualquier cosa de ella y mostrar su información. Pondremos algunas suguerencias para que pueda seleccionar alguna de ellas en lugar de escribirla.
+
+Vamos a `tab2.page.html` e introduzcamos el siguiente código:
+
+```js
+<ion-header>
+  <ion-toolbar>
+    <ion-title>
+      Buscar Película
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+<ion-toolbar>
+  <ion-searchbar placeholder="Buscar película"
+                 animated
+                 debounce="700"
+                 [value]="textoBuscar"
+                 (ionChange)="buscar( $event )"></ion-searchbar>
+</ion-toolbar>
+<ion-content>
+  <ion-grid>
+    <ion-row>
+      <ion-col text-center>
+        <ion-spinner name="crescent"></ion-spinner>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+  <ion-list>
+    <ion-list-header>
+      <ion-label>Ideas</ion-label>
+    </ion-list-header>
+    <ion-item *ngFor="let idea of ideas" (click)="textoBuscar = idea">
+      <ion-label color="primary">{{ idea }}</ion-label>
+    </ion-item>
+  </ion-list>
+</ion-content>
+```
+
+Usaremos un `debounce=700` que indica que se espere 700 milesimas de segundos hasta que la persona deja de escribir para notificar que escribio la persona.
+
+Y en `tab2.page.ts` introduzcamos el siguiente código:
+
+```js
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-tab2',
+  templateUrl: 'tab2.page.html',
+  styleUrls: ['tab2.page.scss']
+})
+export class Tab2Page {
+
+  textoBuscar = '';
+  ideas: string[] = ['Spiderman', 'Avenger','El señor de los anillos', 'La vida es bella'];
+
+  constructor() {}
+
+  buscar( event ) {
+    console.log( event );
+    const valor = event.detail.value;
+  }
+
+}
+```
+
+Cuando cargamos la App la pantalla es esta:
+
+<img src="/images/busqueda.png">
+
 ## Servicio para buscar películas                                                                                04:24
 ## Diseño de la página de búsqueda de películas                                                                  11:05
 ## Guardar películas en el storage                                                                               06:32
