@@ -2602,6 +2602,64 @@ Cuando cargamos la App la pantalla es esta:
 <img src="/images/busqueda.png">
 
 ## Servicio para buscar películas                                                                                04:24
+
+Contamos con el [End Point para buscar peliculas](https://developers.themoviedb.org/3/search/search-movies):
+
+<img src="/images/search-movies.png">
+
+No es el unico servicio para buscar existen varios más:
+
+* GET Search Companies
+* GET Search Collections
+* GET Search Keywords
+* GET Search Movies
+* GET Multi Search
+* GET Search People
+* GET Search TV Shows
+
+Pero en este caso usaremos Search Movies.
+
+Puede recibir varios parámetros: 
+
+api_key
+language
+query
+page
+include_adult
+region
+year
+primary_release_year
+
+### Crear el método buscarPelicula en el servivio
+
+En `movies.service.ts` creamos el método para el End Point:
+
+```js
+buscarPelicula( texto: string){
+  return this.ejecutarQuery(`/search/movie?query=${texto}`);
+}
+```
+
+En `tab2.page.ts` invocamos el método del servicio, inyectandolo previamente:
+
+```js
+import { MoviesService } from '../services/movies.service';
+...
+constructor( private moviesService: MoviesService) {}
+
+buscar( event ) {
+  console.log( event );
+  const valor = event.detail.value;
+  this.moviesService.buscarPelicula(valor)
+    .subscribe( resp => {
+      console.log('PELICULAS BUSCADAS ', resp);
+    });
+}
+```
+Al cargar la App y buscar una pelúcula nos regresa los resultados:
+
+<img src="/images/servicioBuscarPeliculas.png">
+
 ## Diseño de la página de búsqueda de películas                                                                  11:05
 ## Guardar películas en el storage                                                                               06:32
 ## Prevenir duplicados en nuestro storage de películas                                                           04:54
