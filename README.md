@@ -2917,9 +2917,9 @@ import { ComponentsModule } from '../components/components.module';
 ...
 ```
 
-Hasta aquí hemos resuelto varios de los problemas que teniamos y la secuencia de hacer una busqueda se ilustra en la siguiente imafen:
+Hasta aquí hemos resuelto varios de los problemas que teniamos y la secuencia de hacer una busqueda se ilustra en la siguiente imagen:
 
-<img scr="/images/secuenciaBuscar.png">
+<img src="/images/secuenciaBuscar.png">
 
 ## Guardar películas en el storage                                                                               06:32
 ## Prevenir duplicados en nuestro storage de películas                                                           04:54
