@@ -2922,6 +2922,97 @@ Hasta aquí hemos resuelto varios de los problemas que teniamos y la secuencia d
 <img src="/images/secuenciaBuscar.png">
 
 ## Guardar películas en el storage                                                                               06:32
+
+Es momento de guardar nuestras películas en favoritos que cuando toque el botón favoritos quede almacenado en el dispositivo físico para después poder crear algo en la pantalla de favoritos y que la persona pueda ver sus películas favoritas entre otras cosas.
+
+La idea es que cuando toque el botón favoritos grave en el storage. Así que vamos a empezar a crear esto.
+
+Lo ideal sería tener un servicio dedicado para todo el manejo del storage y para eso ocuparemos hacer un par de importaciones del Storage en nuestra aplicación. Tenemos el siguiente enlace [Data Storage](https://ionicframework.com/docs/building/storage), de este enlace nos copiaremos y ejecutaremos el siguiente comando:
+
+`ionic cordova plugin add cordova-sqlite-storage`
+
+Después ejecutaremos el siguiente comando:
+
+`npm install --save @ionic/storage`
+
+En `app.module.ts` tenemos que importar `IonicStorageModule`:
+
+```js
+...
+import { IonicStorageModule } from '@ionic/storage';
+...
+@NgModule({
+  declarations: [AppComponent],
+  entryComponents: [],
+  imports: [
+    BrowserModule,
+    IonicModule.forRoot(),
+    AppRoutingModule,
+    HttpClientModule,
+    IonicStorageModule.forRoot()
+  ],
+...
+```
+
+
+El siguiente paso es crear un servicio que se llama `dataLocal`:
+
+`ionic g s services/dataLocal --skipTests=true`
+
+Una vez creado el servicio abrimos el archivo `data-local.service.ts` e inyectaremos  el servicio `Storage` para poder usar los métodos que nos permiten almacenar información. Crearemos el método `guardarPelicula(pelicula: peliculaDetalle)` que recibe una película de tipo `peliculaDetalle` el código completo es:
+
+```js
+import { Injectable } from '@angular/core';
+import { Storage } from '@ionic/storage';
+import { PeliculaDetalle } from '../interfaces/interfaces';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class DataLocalService {
+
+  peliculas:PeliculaDetalle[] = [];
+
+  constructor(private storage: Storage) { }
+
+  guardarPelicula( pelicula: PeliculaDetalle ){
+    this.peliculas.push( pelicula );
+    this.storage.set('peliculas', this.peliculas);
+  }
+}
+```
+
+Este servicio lo deberíamos llamar cuando se presiona el botón `favoritos` que se encuentra en el componente detalle, abrimos el archivo `detalle.component.ts` donde actualmente tenemos el método:
+
+```js
+favorito() {
+  console.log("Presionaste Favoritos...");
+}
+```
+
+Para poder usar el servicio recien creado debemos inyectarlo en el constructor y ya modificamos el método `favorito()`:
+
+```js
+....
+import { DataLocalService } from 'src/app/service/data-local.service';
+...
+constructor( private moviesService: MoviesService,
+               private modalCtrl: ModalController,
+               private dataLocal: DataLocalService ) { }
+...
+favorito() {
+  // console.log("Presionaste Favoritos...");
+  this.dataLocal.guardarPelicula( this.pelicula );
+}
+...
+```
+
+Vamos a probar esta aplicación selecciona cualquier película que yo deseo y voy a tocar el botón de favorito. Noten que no aparece ningún error pero tampoco sucede absolutamente nada.
+Nos vamos a la pestaña `Aplication` voy a tocar la película grabo en favoritos y tengo mi película Ahí está con toda su información. Claro que si yo la vuelvo a tocar lo vuelvo a insertar. Hay que hacer una pequeña validación para prevenir que podamos grabar películas duplicadas. En teoría lo que yo voy a querer hacer es que si la película ya existe la quiero borrar y si no existe la voy a grabar pero eso lo voy a hacer después. En este momento lo único que me interesa es que estemos grabando las películas en nuestro Storage.
+
+
+<img src="/images/storage.png">
+
 ## Prevenir duplicados en nuestro storage de películas                                                           04:54
 ## Cargar favoritos del storage y verificar si existe una película por ID                                        12:24
 ## Mostrar pantalla de favoritos                                                                                 12:49
