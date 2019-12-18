@@ -2661,6 +2661,266 @@ Al cargar la App y buscar una pelúcula nos regresa los resultados:
 <img src="/images/servicioBuscarPeliculas.png">
 
 ## Diseño de la página de búsqueda de películas                                                                  11:05
+
+Trabajemos con los resultados y el spinner regresemos a la aplicación a nuestro 'tab2.page.ts' y creemos un nuevo arreglo de películas, que sera donde almacenemos el resultado de las películas buscadas:
+
+```js
+peliculas: Pelicula[] = [];
+```
+
+Ahora tenemos:
+
+```js
+buscar( event ) {
+    console.log( event );
+    const valor = event.detail.value;
+    this.moviesService.buscarPelicula(valor)
+      .subscribe( resp => {
+        console.log('PELICULAS BUSCADAS ', resp);
+      });
+  }
+```
+y sabemos que en resp se esta regresando todo esto:
+
+```js
+{page: 1, total_results: 4, total_pages: 1, results: Array(4)}
+```
+
+Tenemos que asignar en `peliculas` las peliculas que se regresan, en teoria sería así:
+
+```js
+this.peliculas = resp.result;
+```
+
+Pero no lo puedo poner así por que `result` no es un objeto que venga en `resp`, pero si quiero evitar una Interfaces la asignación la puedo hacer así:
+
+```js
+this.peliculas = resp['result'];
+```
+
+Ahora ya podemos usar este arreglo para pintar las películas:
+
+```js
+<ion-header>
+  <ion-toolbar>
+    <ion-title>
+      Buscar Película
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+<ion-toolbar>
+  <ion-searchbar placeholder="Buscar película"
+                 animated
+                 debounce="700"
+                 [value]="textoBuscar"
+                 (ionChange)="buscar( $event )"></ion-searchbar>
+</ion-toolbar>
+<ion-content>
+  <ion-grid>
+    <ion-row>
+      <ion-col>
+        <ion-spinner name="crescent"></ion-spinner>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+  <ion-list *ngIf="peliculas.length === 0">
+    <ion-list-header>
+      <ion-label>Ideas</ion-label>
+    </ion-list-header>
+    <ion-item *ngFor="let idea of ideas" (click)="textoBuscar = idea">
+      <ion-label color="primary">{{ idea }}</ion-label>
+    </ion-item>
+  </ion-list>
+  <ion-grid fixed>
+    <ion-row>
+      <ion-col size="6" *ngFor="let pelicula of peliculas">
+         <ion-card>
+           <img [src]="pelicula.poster_path | imagen">
+           <ion-card-header>
+             <ion-card-subtitle>{{ pelicula.release_data }}</ion-card-subtitle>
+           </ion-card-header>
+           <ion-card-content>
+             <h2>{{ pelicula.title }}</h2>
+           </ion-card-content>
+         </ion-card>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+</ion-content>
+```
+
+Como estamos usando el `pipe imagen` debemos importar `PipeModule` en `tab2.module.ts`:
+
+```js
+...
+import { PipesModule } from '../pipes/pipes.module';
+
+@NgModule({
+  imports: [
+    IonicModule,
+    CommonModule,
+    FormsModule,
+    PipesModule,
+    RouterModule.forChild([{ path: '', component: Tab2Page }])
+  ],
+  ...
+```
+
+<img src="/images/buscarSpiderman.png">
+
+Podemos ver que cuando buscamos una película ya nos salen las películas encontradas, pero si vemos lo que regresa el JSON:
+
+`PELICULAS BUSCADAS  {page: 1, total_results: 57, total_pages: 3, results: Array(20)}`
+
+Podemos ver que existen 3 páginas de películas, aquí solo se estan presentando las películas de la página 1, por lo que hay varias cosas que no estan cerradas del todo:
+
+
+1. Quitar el spinner cuando ya se cargan las películas
+2. Cuando se quite el texto a buscar, no llame al servicio
+3. Ir al detalle cuando se pulse en una película
+4. Poner una foto por default si no hay imagenes
+5. Cargar películas de las siguientes páginas
+
+<img src="/images/errorBusqueda.png">
+
+### Ajustar Spinner
+
+Ahora qué hacemos con al Spiner que está girando y girando. Lo tengo que mostrar y ocultar de alguna manera.
+
+Nosotros queremos pinter el spinner cuando este "buscando" las películas y ocultar el spinner cuando ya las alla pintado por lo que en nuestro `tab2.page.html` tenemos que poner una condición para que pinte o no el spinner:
+
+```js
+<ion-grid *ngIf="buscando">
+  <ion-row>
+    <ion-col class="ion-text-center">
+      <ion-spinner name="crescent"></ion-spinner>
+    </ion-col>
+  </ion-row>
+</ion-grid>
+```
+
+En `tab2.page.ts` vamos a implementar esa variable y darle valor de `true` o `false` según sea el caso:
+
+```js
+export class Tab2Page {
+
+  textoBuscar = '';
+  buscando = false;
+  ideas: string[] = ['Spiderman', 'Avenger','El señor de los anillos', 'La vida es bella'];
+  peliculas: Pelicula[] = [];
+
+  constructor( private moviesService: MoviesService) {}
+
+  buscar( event ) {
+    // console.log( event );
+    const valor = event.detail.value;
+    console.log( valor );
+    this.buscando = true;
+
+    this.moviesService.buscarPelicula(valor)
+      .subscribe( resp => {
+        console.log('PELICULAS BUSCADAS ', resp);
+        this.peliculas = resp['results'];
+        this.buscando = false;
+      });
+  }
+
+}
+```
+Inicializamos la variable `buscando = false;` por que al cargar la página de Busqueda no estamos buscando péliculas por eso no mostramos el spinner, cuando empezamos a buscar las películas cambiamos el valor `this.buscando = true;` y cuando nos regresan los resultados volvemos a cambiar el valor `this.buscando = false;` con lo que conseguimos mostrar el spinner cuando corresponda.
+
+### Arreglar que cuando se quite el texto a buscar, no llame al servicio
+
+Cuando la persona borra esa caja de texto yo tengo que controlar este error de alguna manera es decir resetear la búsqueda o dejar la búsqueda así como esta.
+
+Ok les voy a enseñar cómo se me ocurrió a mí solventar este problema.
+
+Regresamos al método de `busqueda` en `tab2.page.ts` aquí es donde se está disparando todo el problema y es cuando `valor` esta vacío. Por lo que debemos controlar esta condición, una forma de hacerlo es con:
+
+```js
+...
+buscar( event ) {
+  // console.log( event );
+  const valor: string = event.detail.value;
+
+  if( valor.length === 0) {
+    this.buscando = false;
+    this.peliculas = [];
+    return;
+  }
+...
+```
+Lo que le estamos diciendo es que si no hay ningún texto a buscar apague el spinner y como el arreglo de películas estará vacio mostrara nuestras sugerencias.
+
+<img src="/images/limpiaTextoSinLlamarServicio.png">
+
+### Ir al detalle de la película
+
+
+Lo primero que hay que hacer es implementar un click en la película donde llamaremos al método `verDetalle(pelicula.id)` que será el encargado de implementar ir al detalle de la película, como lo haciamos en `slideshow-backdrop.component.ts` .
+
+```js
+<ion-grid fixed>
+  <ion-row>
+    <ion-col size="6" *ngFor="let pelicula of peliculas">
+        <ion-card (click)="verDetalle( pelicula.id )">
+          <img [src]="pelicula.poster_path | imagen">
+          <ion-card-header>
+            <ion-card-subtitle>{{ pelicula.release_data }}</ion-card-subtitle>
+          </ion-card-header>
+          <ion-card-content>
+            <h2>{{ pelicula.title }}</h2>
+          </ion-card-content>
+        </ion-card>
+    </ion-col>
+  </ion-row>
+</ion-grid>
+```
+En `tab2.page.ts` implementamos el método `verDetalle( id: string )`:
+
+```js
+...
+import { ModalController } from '@ionic/angular';
+import { DetalleComponent } from '../components/detalle/detalle.component';
+...
+constructor( private moviesService: MoviesService, private modalCtrl: ModalController) {}
+...
+async verDetalle( id: string ){
+  const modal = await this.modalCtrl.create({
+    component: DetalleComponent,
+    componentProps: {
+      id
+    }
+  });
+  modal.present();
+}
+...
+```
+
+Pero para usar el `DetalleComponent` debemos importar `ComponentsModule` en `tab2.module.ts`:
+
+```js
+...
+import { ComponentsModule } from '../components/components.module';
+...
+@NgModule({
+  imports: [
+    IonicModule,
+    CommonModule,
+    FormsModule,
+    PipesModule,
+    ComponentsModule,
+    RouterModule.forChild([{ path: '', component: Tab2Page }])
+  ],
+  declarations: [Tab2Page]
+})
+...
+```
+
+Hasta aquí hemos resuelto varios de los problemas que teniamos y la secuencia de hacer una busqueda se ilustra en la siguiente imafen:
+
+<img scr="/images/secuenciaBuscar.png">
+
 ## Guardar películas en el storage                                                                               06:32
 ## Prevenir duplicados en nuestro storage de películas                                                           04:54
 ## Cargar favoritos del storage y verificar si existe una película por ID                                        12:24
